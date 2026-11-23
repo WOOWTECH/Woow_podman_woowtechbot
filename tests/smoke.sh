@@ -34,7 +34,7 @@ check "the container is healthy" podman healthcheck run woowtechbot
 want='8080/tcp'
 [[ -z $published ]] || want='8080/tcp 8081/tcp'
 got=$(podman port woowtechbot | sed -E 's/ ->.*//' | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [[ $got == "$want" ]]; then ok "only the entrance${published:+ and the published site} are published ($got)"; else bad "published ports are '$got', want '$want'"; fi
+if [[ $got == "$want" ]]; then ok "published: only the entrance${published:+ and the published site} ($got)"; else bad "published ports are '$got', want '$want'"; fi
 check "not host networking" test "$(podman inspect --format '{{.HostConfig.NetworkMode}}' woowtechbot)" != host
 check "/data/options.json links into the private tmpfs" in_box sh -c \
   'test -L /data/options.json && test "$(readlink /data/options.json)" = /run/woowtechbot/options.json && grep -q " /run/woowtechbot tmpfs " /proc/self/mounts'
@@ -45,21 +45,30 @@ if in_box sh -c 'ls /run/secrets/woowtechbot-* >/dev/null 2>&1'; then
     'for f in /run/secrets/woowtechbot-*; do test "$(stat -c %a:%U "$f")" = 400:root || exit 1; done'
   check "the bots' user cannot read the secrets" bash -c '! podman exec -u maus woowtechbot sh -c "cat /run/secrets/woowtechbot-*"'
 fi
+# The checks below match whole argv entries and skip their own process: their script text names
+# the server file too, so a substring match can find the check itself.
 check "the app server runs as maus" in_box node -e '
   const fs = require("fs");
-  const pids = fs.readdirSync("/proc").filter(p => /^\d+$/.test(p));
-  const server = pids.find(p => { try { return fs.readFileSync(`/proc/${p}/cmdline`, "utf8").includes("server-launcher.js"); } catch { return false; } });
-  if (!server) process.exit(1);
-  const uid = fs.readFileSync(`/proc/${server}/status`, "utf8").match(/^Uid:\s+(\d+)/m)[1];
+  const argv = p => { try { return fs.readFileSync(`/proc/${p}/cmdline`, "utf8").split("\0"); } catch { return []; } };
+  const pids = fs.readdirSync("/proc").filter(p => /^\d+$/.test(p) && p !== String(process.pid));
+  const servers = pids.filter(p => argv(p).includes("/app/dist-server/server-launcher.js"));
+  if (!servers.length) process.exit(1);
   const maus = fs.readFileSync("/etc/passwd", "utf8").split("\n").find(l => l.startsWith("maus:")).split(":")[2];
-  process.exit(uid === maus ? 0 : 1);'
-check "the app server got no WTB_ settings in its environment" in_box node -e '
+  const uid = p => fs.readFileSync(`/proc/${p}/status`, "utf8").match(/^Uid:\s+(\d+)/m)[1];
+  process.exit(servers.every(p => uid(p) === maus) ? 0 : 1);'
+# Read as maus: root in a rootless container has no CAP_SYS_PTRACE, so it cannot read the
+# environment of maus's processes. Only the app's own processes count, not this exec session.
+check "the app's processes got no WTB_ settings in their environment" podman exec -u maus woowtechbot node -e '
   const fs = require("fs");
-  const server = fs.readdirSync("/proc").filter(p => /^\d+$/.test(p)).find(p => {
-    try { return fs.readFileSync(`/proc/${p}/cmdline`, "utf8").includes("server-launcher.js"); } catch { return false; } });
-  if (!server) process.exit(1);
-  const env = fs.readFileSync(`/proc/${server}/environ`, "utf8").split("\0");
-  process.exit(env.some(e => /^(WTB_|WOOW_WTB_)/.test(e)) ? 1 : 0);'
+  let server = false;
+  for (const p of fs.readdirSync("/proc").filter(p => /^\d+$/.test(p) && p !== String(process.pid))) {
+    let argv, env;
+    try { argv = fs.readFileSync(`/proc/${p}/cmdline`, "utf8").split("\0"); env = fs.readFileSync(`/proc/${p}/environ`, "utf8").split("\0"); } catch { continue; }
+    if (!argv.some(a => a.startsWith("/app/") || a.startsWith("/opt/omb-addon/"))) continue;
+    if (argv.includes("/app/dist-server/server-launcher.js")) server = true;
+    if (env.some(e => /^(WTB_|WOOW_WTB_)/.test(e))) process.exit(1);
+  }
+  process.exit(server ? 0 : 1);'
 check "document_read tools are present (pdftotext, openpyxl, prlimit)" in_box sh -c \
   'test -x /opt/woowtechbot/conda/bin/pdftotext && /opt/woowtechbot/conda/bin/python3 -I -c "import openpyxl" && test -x /usr/bin/prlimit'
 check "the browser is present" in_box sh -c 'test -x "$AGENT_BROWSER_EXECUTABLE_PATH"'
@@ -68,6 +77,12 @@ headers=$(curl -s -D - -o /dev/null --max-time 10 "$base/api/auth/session" | tr 
 code=$(sed -n '1s/^HTTP\/[0-9.]* \([0-9]*\).*/\1/p' <<<"$headers")
 if [[ $code == 401 || $code == 403 ]]; then ok "an unpaired session is refused ($code)"; else bad "an unpaired session answered $code"; fi
 if grep -qi '^cache-control: no-store' <<<"$headers"; then ok "the auth route is no-store"; else bad "the auth route is not no-store"; fi
+mint=$(status -H 'content-type: application/json' --data '{"label":"smoke-probe","ttlMs":60000,"scopes":["admin"]}' "$base/api/auth/pairing")
+if [[ $mint == 401 || $mint == 403 ]]; then ok "codes cannot be made through the entrance ($mint)"; else bad "POST /api/auth/pairing on the entrance answered $mint"; fi
+to_bytes() { local v=${1,,}; case $v in *g) echo $((${v%g} * 1024 ** 3)) ;; *m) echo $((${v%m} * 1024 ** 2)) ;; *k) echo $((${v%k} * 1024)) ;; *) echo "$v" ;; esac; }
+want_limits="$(to_bytes "$(ql_env_get WOOW_WTB_MEMORY)") $(to_bytes "$(ql_env_get WOOW_WTB_MEMORY)") $(awk -v c="$(ql_env_get WOOW_WTB_CPUS)" 'BEGIN { printf "%d", c * 1e9 }') $(ql_env_get WOOW_WTB_PIDS_LIMIT)"
+got_limits=$(podman inspect --format '{{.HostConfig.Memory}} {{.HostConfig.MemorySwap}} {{.HostConfig.NanoCpus}} {{.HostConfig.PidsLimit}}' woowtechbot)
+if [[ $got_limits == "$want_limits" ]]; then ok "memory, swap, CPU and process limits are in force"; else bad "limits are '$got_limits', want '$want_limits'"; fi
 check "a settings error stops the container with 78" bash -c \
   "podman run --rm --network=none --tmpfs /run/woowtechbot:rw,mode=0700,size=1m -e WTB_LLM_GW_MAX_TOKENS=0 '$WTB_IMAGE' node /opt/woowtechbot-podman/entry.cjs --check; test \$? = 78"
 
@@ -84,6 +99,8 @@ if ((pairing)); then
   if [[ $(status -b "$tmp/jar" "$base/api/auth/session") == 200 ]]; then ok "the paired session is accepted"; else bad "the paired session is not accepted"; fi
   second=$(redeem)
   if [[ $second == 401 ]]; then ok "the same code is refused the second time (401)"; else bad "reusing the code answered $second"; fi
+  pcode=$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["code"])' "$tmp/code.json")
+  if [[ -n $pcode ]] && ! podman logs woowtechbot 2>&1 | grep -qF -- "$pcode"; then ok "the code is in no container log"; else bad "the code shows up in the container log"; fi
   out=$(status -b "$tmp/jar" -H 'content-type: application/json' --data '{}' "$base/api/auth/logout")
   after=$(status -b "$tmp/jar" "$base/api/auth/session")
   if [[ $out == 200 && ($after == 401 || $after == 403) ]]; then ok "signing out ends that session"; else bad "logout $out, session after $after"; fi

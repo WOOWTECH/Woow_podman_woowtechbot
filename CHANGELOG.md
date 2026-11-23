@@ -21,3 +21,8 @@ the revision of this repo's packaging on it.
   host networking. Limits 4 GiB (no swap), 2 CPUs, 4096 pids, 3 turns at once; 512 MiB `/dev/shm`.
 - `scripts/install.sh` (idempotent; `--gh-auth` pulls the private base with the gh token without
   writing it to disk), `scripts/uninstall.sh` (`--purge` keeps a final backup), `scripts/secret.sh`.
+- Live checks on a host: `tests/smoke.sh` (24 checks: unit, ports, tmpfs options, root-only
+  secrets, the app's processes, limits, the owner API not reachable through the entrance, one-time
+  pairing, the code in no log) and `tests/runtime.sh` (the HA add-on's runtime verification on the
+  Podman path in a throwaway container: Odoo MCP read-only gateways from root-only secret files,
+  unpaired and forged-ingress requests refused, engine versions).

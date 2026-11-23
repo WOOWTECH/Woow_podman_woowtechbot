@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：第 1 階段（核心）開發中，尚未完成實機驗收。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：第 1 階段（核心）已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；對外網址、登入信、Cockpit 管理頁與備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 
@@ -71,6 +71,8 @@ scripts/pair.sh cancel browser|phone|all
 
 規則和 HA 管理員配對頁相同：配對碼 10 分鐘內有效、只能用一次，取得管理員權限；同一類重新產生時，舊的那組會作廢；取消不會讓已登入的裝置登出。配對碼只顯示在你的終端機，不會寫進日誌。
 
+在瀏覽器打開配對連結後，配對碼會自動帶入，按「連線」就會登入。頁面上「在伺服器上執行 npx openmausbot pair」是上游的說明文字；在 Podman 上請改用 `scripts/pair.sh browser`。
+
 **誰算管理員**：能在這台主機用這個帳號執行 podman 的人，就能產生配對碼，等於 HA 上的管理員。之後的 Cockpit 管理頁也會限定只有管理員能用。
 
 ## 對外網址
@@ -92,6 +94,12 @@ scripts/pair.sh cancel browser|phone|all
 - 官方 App 2.0.0 從檔案選擇器選 CSV 會被拒，可以改成 .txt 或壓成 ZIP（上游 #7084）。配對連結沒有確認畫面。
 - Codex 的工具範圍一定要保留 `native:*`。
 - 模型帳號的用量由各帳號自己負責。
+
+## 測試
+
+- `node --test tests/*.test.cjs`、`tests/dryrun.local.sh`：不需要映像，CI 每次都跑。
+- `tests/smoke.sh`：安裝後在主機上跑，檢查服務、開放的埠、設定與密鑰的權限、資源上限、配對碼只能用一次、配對碼不進日誌。會產生並用掉一組配對碼，最後清乾淨。
+- `tests/runtime.sh`：用一個用完即丟、沒有網路的容器，跑 HA 外掛的執行期檢查（Odoo MCP 唯讀閘道、未配對與假冒 HA 入口的請求被拒、引擎版本），不影響已安裝的 bot。
 
 ## 與其他版本對照
 
