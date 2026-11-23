@@ -11,7 +11,8 @@ ENV_EXAMPLE=$REPO/config/$APP.env.example
 ENV_FILE=$HOME/.config/$APP/$APP.env
 BACKUP_ROOT=$HOME/.local/share/woow-backups/$APP
 # container:unit pairs the units create (legacy-collision guard)
-CONTAINERS=("woowtechbot:woowtechbot.service")
+CONTAINERS=("woowtechbot:woowtechbot.service" "woowtechbot-tunnel:woowtechbot-tunnel.service"
+  "woowtechbot-apps-tunnel:woowtechbot-apps-tunnel.service")
 # env keys allowed to carry user-supplied credentials (ERE on the whole key; empty = none):
 # every credential of this app is a podman secret (scripts/secret.sh).
 ENV_CREDENTIAL_ALLOW=''
@@ -25,6 +26,10 @@ WTB_IMAGE=localhost/woowtechbot-podman:$WTB_VERSION
 # The optional credentials (podman secrets) and where the container reads them (root only).
 WTB_SECRETS=(woowtechbot-signin-relay-token woowtechbot-signin-access-client-secret
   woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url)
+# Optional Cloudflare Tunnel connectors (quadlet/optional/<name>.container), each installed only when
+# its token secret <name>-token exists. The bot's container never gets these secrets.
+WTB_TUNNELS=(woowtechbot-tunnel woowtechbot-apps-tunnel)
+WTB_TUNNEL_SECRETS=("${WTB_TUNNELS[@]/%/-token}")
 # ------------------------------------------------------------------------------------------------
 export QL_APP=$APP
 

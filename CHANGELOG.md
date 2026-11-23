@@ -3,7 +3,23 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
-## 0.1.7-rc.14-1 (unreleased)
+## 0.1.7-rc.14-2 (unreleased)
+
+- Optional Cloudflare Tunnel connectors of the bot's own (`quadlet/optional`): `woowtechbot-tunnel`
+  (bot address, and the published site when both are routes of one tunnel) and
+  `woowtechbot-apps-tunnel` (the published site on a tunnel of its own). Installed only while their
+  token secret is set (`scripts/secret.sh set tunnel-token` / `apps-tunnel-token`) and removed when it
+  is cleared. They join the bot's private network, publish nothing on the host, and the token never
+  reaches the bot's container. A bad token is reported and leaves the bot running.
+- `scripts/check-public.sh`: checks the public addresses from the outside (TLS, no Access login in
+  front of the bot, the login boundary and no-store, no pairing codes from outside, the published
+  site's isolation); `--pairing` also signs in once with a one-time code over the public address.
+- `tests/ha-suites.sh`: runs the HA add-on's own suites from a checkout of the matching release
+  (tools, published apps in both modes before and after a restart, the email sign-in flow against a
+  mail stand-in). `tests/public.sh`: check-public.sh against a TLS stand-in for the tunnel, and
+  against a broken set-up that it must reject.
+
+## 0.1.7-rc.14-1 (2026-11-24)
 
 - First Podman edition: the HA add-on image `ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14`,
   pinned by digest, plus an entry point that does what the HA Supervisor does there: it builds

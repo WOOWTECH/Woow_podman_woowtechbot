@@ -1,0 +1,45 @@
+# woowtechbot-apps-tunnel: an optional Cloudflare Tunnel connector for the published site on a tunnel of its own. scripts/install.sh installs it only
+# when the podman secret woowtechbot-apps-tunnel-token exists (scripts/secret.sh set apps-tunnel-token), and
+# removes it again when the secret is cleared. Hosts that already run a tunnel (for example
+# Woow_cloudflare_tunnel_webgui) with free routes do not need it: point a route at the published
+# port instead.
+#
+# It joins the bot's private network, so the route's service is http://woowtechbot:8081 and nothing
+# more is published on the host. The token is mounted here only, never in the bot's container. The
+# metrics port stays on this container's own loopback: the bots cannot reach it.
+[Unit]
+Description=woowtechbot Cloudflare Tunnel connector (the published site on a tunnel of its own)
+Documentation=https://github.com/WOOWTECH/Woow_podman_woowtechbot
+Wants=network-online.target
+After=network-online.target woowtechbot.service
+
+[Container]
+ContainerName=woowtechbot-apps-tunnel
+Image=docker.io/cloudflare/cloudflared:2026.10.5@sha256:1b1d34d0a9c0bfca9de72db8460d328db3f19edd2b96169114e3e893a97bbe53
+Network=woowtechbot.network
+HostName=woowtechbot-apps-tunnel
+Label=io.woowtech.app=woowtechbot
+Secret=woowtechbot-apps-tunnel-token,type=mount,uid=65532,gid=65532,mode=0400
+# The image's entry point is "cloudflared --no-autoupdate" and its user is 65532.
+Exec=tunnel --metrics 127.0.0.1:20241 run --token-file /run/secrets/woowtechbot-apps-tunnel-token
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=256
+PodmanArgs=--memory=256m --memory-swap=256m --cpus=0.5
+# Exec form: the image has no shell. "ready" is healthy with at least one edge connection.
+HealthCmd=["cloudflared","tunnel","--metrics","127.0.0.1:20241","ready"]
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=4
+HealthStartPeriod=60s
+
+[Service]
+Restart=always
+RestartSec=15
+SuccessExitStatus=143
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

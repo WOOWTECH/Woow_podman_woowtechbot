@@ -37,5 +37,5 @@ jobs:
           # the HA add-on version in VERSION matches the base tag
           ha=$(sed -E 's/-[0-9]+$//' VERSION)
           grep -qx "WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:$ha" scripts/common.sh
-          ! grep -rInE '(wtbha?1\.[0-9a-f]{8}-[0-9a-f]{4}-|private_[A-Za-z0-9_-]{8,}/mcp|gh[ops]_[A-Za-z0-9]{20,})' \
+          ! grep -rInE '(wtbha?1\.[0-9a-f]{8}-[0-9a-f]{4}-|private_[A-Za-z0-9_-]{8,}/mcp|gh[ops]_[A-Za-z0-9]{20,}|eyJhIjoi[A-Za-z0-9+/=]{40,})' \
             --exclude-dir=.git .

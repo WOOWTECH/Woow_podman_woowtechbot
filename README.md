@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：第 1 階段（核心）已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；對外網址、登入信、Cockpit 管理頁與備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：第 1 階段（核心）已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；對外網址與登入信的程式已備好、等開通後實測；Cockpit 管理頁與備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 
@@ -57,6 +57,7 @@ scripts/secret.sh set signin-relay-token        # 公司代寄登入信的權杖
 scripts/secret.sh set signin-access-client-secret
 scripts/secret.sh set apporo-odoo-mcp-url        # 選填：Odoo MCP 唯讀
 scripts/secret.sh set woow-prod-odoo-mcp-url
+scripts/secret.sh set tunnel-token               # 選填：bot 自己的對外通道（見「對外網址」）
 scripts/install.sh                               # 套用
 ```
 
@@ -77,7 +78,51 @@ scripts/pair.sh cancel browser|phone|all
 
 ## 對外網址
 
-容器只在主機的 `127.0.0.1:18799` 開入口；有設定發布網址時，另開 `127.0.0.1:18781`。對外網址由同一台主機上的 Cloudflare Tunnel（PaaS Security Access）轉進來。8099（HA Ingress）和 8799（應用程式的擁有者 API）永遠不會對外開放，也不可以改用主機網路模式。
+容器只在主機的 `127.0.0.1:18799` 開入口；有設定發布網址時，另開 `127.0.0.1:18781`。8099（HA Ingress）和 8799（應用程式的擁有者 API）永遠不會對外開放，也不可以改用主機網路模式。
+
+對外網址由 Cloudflare Tunnel 轉進來，兩種接法擇一：
+
+| 接法 | 路由的服務位址 | 適合 |
+|---|---|---|
+| 主機上已經有通道，而且還有空的路由 | bot：`http://localhost:18799`；發布網站：`http://localhost:18781` | 已安裝 [Woow_cloudflare_tunnel_webgui](https://github.com/WOOWTECH/Woow_cloudflare_tunnel_webgui) 的主機 |
+| bot 自己的連線程式（選配） | bot：`http://woowtechbot:8080`；發布網站：`http://woowtechbot:8081` | 沒有通道，或現有通道的路由已用滿 |
+
+用 bot 自己的連線程式時，把通道金鑰放進密鑰再安裝一次即可。金鑰只給連線程式，bot 讀不到：
+
+```bash
+scripts/secret.sh set tunnel-token        # 貼上通道金鑰（輸入時不顯示）
+scripts/secret.sh set apps-tunnel-token   # 只有發布網站用另一條通道時才需要
+scripts/install.sh
+```
+
+網址開通後：
+
+1. 在設定檔填入 `WTB_PUBLIC_URL`（和選填的 `WTB_PUBLISHED_URL`），執行 `scripts/install.sh`。
+2. 執行 `scripts/check-public.sh`，再執行 `scripts/check-public.sh --pairing`，從外面驗收網址、登入邊界、發布網站的隔離，以及一次完整的配對與登出。
+
+注意：
+
+- 這兩個網址要設成公開路由，不要在前面加 Cloudflare Access 的登入頁，否則手機 App 連不上。bot 自己會要求配對或登入。
+- 發布網址要用另一個網域名稱，不能是 bot 網址的上層或下層網域。
+- 沒有發布網址也可以用：發布的網站會放在 bot 網址的 `/published/` 底下，但在較嚴格的沙盒裡，JavaScript module、讀取 JSON 與 localStorage 不能用。
+
+## Email 驗證碼登入
+
+信件由公司的代寄服務寄出，主機上不放 SMTP 密碼。每一台主機要有自己的代寄憑證，不沿用 HA 的。憑證由公司平台的系統管理員核發，需要提供：
+
+- 站點名稱與負責人；
+- 登入網址，也就是 `WTB_PUBLIC_URL`；
+- 1 到 20 個測試收件信箱。新憑證一開始是測試模式，只會寄給這些信箱。
+
+拿到代寄網址與權杖後：
+
+```bash
+scripts/install.sh --set WTB_SIGNIN_RELAY_URL=https://<公司代寄網址>/api/woowtechbot/signin-mail
+scripts/secret.sh set signin-relay-token   # 貼上權杖（輸入時不顯示）
+scripts/install.sh
+```
+
+驗收：收件匣收到 8 碼驗證碼並成功登入一次；同一碼再用會被拒（401）。通過後才由管理員關掉測試模式。憑證最長 365 天，到期前要換發。
 
 ## 更新與移除
 
@@ -99,6 +144,8 @@ scripts/pair.sh cancel browser|phone|all
 
 - `node --test tests/*.test.cjs`、`tests/dryrun.local.sh`：不需要映像，CI 每次都跑。
 - `tests/smoke.sh`：安裝後在主機上跑，檢查服務、開放的埠、設定與密鑰的權限、資源上限、配對碼只能用一次、配對碼不進日誌。會產生並用掉一組配對碼，最後清乾淨。
+- `tests/ha-suites.sh <HA 外掛的 checkout>`：拿同一版 HA 外掛自己的測試來跑 Podman 映像（工具、發布網站兩種模式、Email 登入），不另外抄一份。
+- `tests/public.sh`：用本機的 TLS 替身試跑 `check-public.sh`，也確認它會擋下接錯的設定。
 - `tests/runtime.sh`：用一個用完即丟、沒有網路的容器，跑 HA 外掛的執行期檢查（Odoo MCP 唯讀閘道、未配對與假冒 HA 入口的請求被拒、引擎版本），不影響已安裝的 bot。
 
 ## 與其他版本對照
