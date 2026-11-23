@@ -149,7 +149,8 @@ async function run(argv, { stdout = process.stdout } = {}) {
     const result = await mint(command);
     if (json) {
       const { qrSvg } = require(path.join(ADDON, 'qr.cjs'));
-      stdout.write(JSON.stringify({ ...result, url: result.server ? `${result.server}/pair#code=${encodeURIComponent(result.code)}` : null,
+      const base = command === 'browser' ? result.server || localOrigin : result.server;
+      stdout.write(JSON.stringify({ ...result, url: base ? `${base}/pair#code=${encodeURIComponent(result.code)}` : null,
         qrSvg: result.inviteUrl ? qrSvg(result.inviteUrl) : null }) + '\n');
     } else stdout.write(render(result, { localOrigin, tty: Boolean(stdout.isTTY) }) + '\n');
     return 0;

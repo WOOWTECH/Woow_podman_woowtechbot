@@ -71,8 +71,11 @@ test('without a public URL the browser link uses the local entrance and the phon
   const out = capture();
   await pair.run(['browser', '--local-origin', 'http://127.0.0.1:18799'], { stdout: out.stdout });
   assert.match(out.text(), /http:\/\/127\.0\.0\.1:18799\/pair#code=/);
+  const json = capture();
+  await pair.run(['browser', '--json', '--local-origin', 'http://127.0.0.1:18799'], { stdout: json.stdout });
+  assert.equal(JSON.parse(json.text()).url, 'http://127.0.0.1:18799/pair#code=ABCD-EFGH-JKLM', 'the JSON link uses the local entrance too');
   await assert.rejects(pair.run(['phone'], { stdout: capture().stdout }), err => err.code === 2 && /WTB_PUBLIC_URL/.test(err.message));
-  assert.equal(state.calls.filter(c => c.method === 'POST').length, 1, 'no phone code was made');
+  assert.equal(state.calls.filter(c => c.method === 'POST').length, 2, 'no phone code was made');
 });
 
 test('a phone code shows the server, the code and, on a terminal, a QR code', async () => {
