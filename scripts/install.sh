@@ -80,7 +80,7 @@ wtb_build_image() {
 # validators) in a throwaway container without network, before any unit changes.
 wtb_check_settings() {
   local s
-  local -a args=(--rm --network=none --env-file "$ENV_FILE" --tmpfs /run/woowtechbot:rw,mode=0700,size=1m)
+  local -a args=(--rm --network=none --env-file "$ENV_FILE" --tmpfs "/run/woowtechbot:rw,mode=0700,size=1m")
   for s in "${WTB_SECRETS[@]}"; do
     if podman secret exists "$s"; then args+=(--secret "$s,type=mount,uid=0,gid=0,mode=0400"); fi
   done

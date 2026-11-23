@@ -7,6 +7,7 @@
 # It mints one browser code, redeems it once over the local entrance, checks that the same code is
 # refused the second time, signs that session out again and cancels what is left.
 # shellcheck source-path=SCRIPTDIR
+# shellcheck disable=SC2016 # the single-quoted scripts run inside the container, not here
 set -euo pipefail
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 # shellcheck source=../scripts/lib/quadlet-lib.sh

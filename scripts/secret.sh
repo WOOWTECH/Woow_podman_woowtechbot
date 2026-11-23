@@ -69,6 +69,7 @@ else
     signin-access-client-secret)
       [[ $value =~ ^[[:graph:]]{1,2048}$ ]] || ql_die "invalid Cloudflare Access client secret; nothing was changed" ;;
   esac
+  # shellcheck disable=SC2034 # read by ql_secret_ensure through env:WTB_SECRET_VALUE
   WTB_SECRET_VALUE=$value
   unset value
   ql_secret_ensure "$secret" env:WTB_SECRET_VALUE --update
