@@ -35,7 +35,7 @@ test.before(async () => {
   process.env.WTB_OPTIONS_FILE = optionsFile;
   pair = require('../image/rootfs/opt/woowtechbot-podman/pair.cjs');
 });
-test.after(() => server.close());
+test.after(() => { server.close(); fs.rmSync(tmp, { recursive: true, force: true }); });
 test.beforeEach(() => {
   fs.writeFileSync(optionsFile, JSON.stringify({ public_url: 'https://bot.example.com' }));
   state = {
