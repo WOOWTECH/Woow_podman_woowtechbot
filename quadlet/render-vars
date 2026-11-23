@@ -1,0 +1,10 @@
+# Variables scripts/install.sh may substitute into the units (@@NAME@@).
+# Computed by scripts/render-args.sh:
+WTB_IMAGE
+WTB_PUBLISH
+WTB_PUBLISH_PUBLISHED
+WTB_SECRET_LINES
+# Taken from ~/.config/woowtechbot/woowtechbot.env (validated by scripts/render-args.sh):
+WOOW_WTB_MEMORY
+WOOW_WTB_CPUS
+WOOW_WTB_PIDS_LIMIT

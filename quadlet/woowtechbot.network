@@ -1,0 +1,8 @@
+# Private bridge for the container. Never host networking: inside the container the app treats
+# loopback port 8799 as its owner, so host networking would make every local process an admin.
+[Unit]
+Description=woowtechbot network
+
+[Network]
+NetworkName=woowtechbot
+Label=io.woowtech.app=woowtechbot

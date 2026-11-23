@@ -1,0 +1,9 @@
+# /data of the woowtechbot container: the app's state (/data/.openmausbot), the Claude Code and
+# Codex logins (~/.claude, ~/.codex), published apps (/data/.woowtechbot-hosting) and everything
+# the bots write under HOME=/data. Credentials are not stored here (see entry.cjs).
+[Unit]
+Description=woowtechbot data volume (/data)
+
+[Volume]
+VolumeName=woowtechbot-data
+Label=io.woowtech.app=woowtechbot
