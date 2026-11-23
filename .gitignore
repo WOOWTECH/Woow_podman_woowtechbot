@@ -1,0 +1,6 @@
+# local state and secrets never belong in this repo
+*.env
+!config/*.env.example
+.build/
+node_modules/
+__pycache__/

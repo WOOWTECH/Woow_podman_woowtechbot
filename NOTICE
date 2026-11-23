@@ -1,0 +1,12 @@
+woowtechbot for Podman
+Copyright 2026 WOOWTECH
+
+This repository contains packaging (Podman Quadlet units, install and
+maintenance scripts, documentation) for woowtechbot, the WOOWTECH build of
+the OpenMausBot open-source project (https://github.com/milind-soni/OpenMausBot),
+which is licensed under the Apache License, Version 2.0. The separately
+licensed enterprise/ tree of OpenMausBot is not used.
+
+The container images referenced by this packaging carry their own LICENSE and
+NOTICE files, including the upstream OpenMausBot attributions. This project is
+not endorsed by the OpenMausBot authors.
