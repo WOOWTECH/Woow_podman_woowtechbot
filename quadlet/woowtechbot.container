@@ -1,0 +1,57 @@
+# woowtechbot: the WOOWTECH team AI assistant based on OpenMausBot, rootless Quadlet.
+#
+# The image is the HA add-on image (pinned by digest) plus this repo's entry point; see
+# image/Containerfile. The entry point builds the add-on options from the env file and the
+# podman secrets, checks them like the HA Supervisor does, and runs the add-on unchanged.
+#
+# Ports: only the app entrance (8080) is published, and the published-apps site (8081) when
+# WTB_PUBLISHED_URL is set. Never published: 8099 (HA Ingress, which answers 403 to everything
+# without the Supervisor) and 8799 (the app's loopback owner API, reached only by podman exec).
+[Unit]
+Description=woowtechbot (OpenMausBot-based team AI assistant)
+Documentation=https://github.com/WOOWTECH/Woow_podman_woowtechbot
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=woowtechbot
+# Built by scripts/install.sh; the tag is the repo VERSION file.
+Image=@@WTB_IMAGE@@
+Pull=never
+Network=woowtechbot.network
+HostName=woowtechbot
+Label=io.woowtech.app=woowtechbot
+PublishPort=@@WTB_PUBLISH@@:8080
+@@WTB_PUBLISH_PUBLISHED@@
+Volume=woowtechbot-data.volume:/data
+# The add-on options (with credentials) live here, never in the data volume or its backups.
+Tmpfs=/run/woowtechbot:rw,mode=0700,size=1m
+# Chromium (the bots' browser) needs a real /dev/shm; the PaaS chart gives it 512 MiB as well.
+PodmanArgs=--shm-size=512m
+EnvironmentFile=%h/.config/woowtechbot/woowtechbot.env
+# Optional credentials, root-only inside the container (the bots run as the image's maus user).
+@@WTB_SECRET_LINES@@
+Exec=node /opt/woowtechbot-podman/entry.cjs
+PidsLimit=@@WOOW_WTB_PIDS_LIMIT@@
+# Quadlet 4.9.3 has no Memory=/Cpus= keys. memory-swap equal to memory: no swap for the bots.
+PodmanArgs=--memory=@@WOOW_WTB_MEMORY@@ --memory-swap=@@WOOW_WTB_MEMORY@@ --cpus=@@WOOW_WTB_CPUS@@
+HealthCmd=node /opt/woowtechbot-podman/healthcheck.cjs
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=4
+HealthStartPeriod=120s
+# The add-on gives its children 27 s to stop before it kills them.
+PodmanArgs=--stop-timeout=40
+
+[Service]
+Restart=always
+RestartSec=10
+# 78 = the settings are not valid (entry.cjs); restarting cannot fix that.
+RestartPreventExitStatus=78
+# A container stopped by systemd gets SIGTERM; an exit of 143 after that is a clean stop.
+SuccessExitStatus=143
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

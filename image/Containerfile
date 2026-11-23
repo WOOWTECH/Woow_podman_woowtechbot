@@ -1,0 +1,17 @@
+# image/Containerfile: the Podman edition = the HA add-on image, unchanged, plus this repo's entry
+# point, pairing command and health check under /opt/woowtechbot-podman. scripts/install.sh builds
+# it on the host as localhost/woowtechbot-podman:<VERSION>; the base is pinned by digest in
+# scripts/common.sh (WTB_BASE_IMAGE).
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG WTB_VERSION
+ARG BASE_IMAGE
+COPY rootfs/opt/woowtechbot-podman/ /opt/woowtechbot-podman/
+# Fail the build, not the first start, when a future base no longer has what entry.cjs relies on.
+RUN test -n "$WTB_VERSION" && chmod 0755 /opt/woowtechbot-podman && chmod 0644 /opt/woowtechbot-podman/*.cjs && \
+    node --check /opt/woowtechbot-podman/entry.cjs && node --check /opt/woowtechbot-podman/pair.cjs && \
+    node --check /opt/woowtechbot-podman/healthcheck.cjs && node /opt/woowtechbot-podman/entry.cjs --self-test
+LABEL io.woowtech.app="woowtechbot" org.opencontainers.image.version="${WTB_VERSION}" \
+      io.woowtech.base-image="${BASE_IMAGE}" \
+      org.opencontainers.image.source="https://github.com/WOOWTECH/Woow_podman_woowtechbot"
+CMD ["node", "/opt/woowtechbot-podman/entry.cjs"]

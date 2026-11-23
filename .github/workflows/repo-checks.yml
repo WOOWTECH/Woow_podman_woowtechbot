@@ -1,0 +1,41 @@
+# .github/workflows/repo-checks.yml: repo-specific checks. quadlet-ci.yml is vendored from
+# Woow_quadlet_migration_plan/lib and must not be edited; checks that belong to this repo live here.
+# The woowtechbot base image is private, so CI tests the Podman layer with test doubles of the
+# HA add-on modules; tests/smoke.sh runs the real image on a host.
+name: repo-checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"   # the base image runs Node 24
+      - name: Syntax of the files copied into the image
+        run: for f in image/rootfs/opt/woowtechbot-podman/*.cjs; do node --check "$f"; done
+      - name: Entry point and pairing command tests
+        run: node --test tests/*.test.cjs
+
+  repo:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: VERSION, image pin and no credentials in the repo
+        run: |
+          set -eu
+          grep -qxE '[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?-[0-9]+' VERSION
+          grep -qE '^WTB_BASE_IMAGE=ghcr\.io/woowtech/amd64-woowtechbot@sha256:[0-9a-f]{64}$' scripts/common.sh
+          # the HA add-on version in VERSION matches the base tag
+          ha=$(sed -E 's/-[0-9]+$//' VERSION)
+          grep -qx "WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:$ha" scripts/common.sh
+          ! grep -rInE '(wtbha?1\.[0-9a-f]{8}-[0-9a-f]{4}-|private_[A-Za-z0-9_-]{8,}/mcp|gh[ops]_[A-Za-z0-9]{20,})' \
+            --exclude-dir=.git .

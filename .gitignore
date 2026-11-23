@@ -1,6 +1,8 @@
 # local state and secrets never belong in this repo
 *.env
 !config/*.env.example
+# test fixtures carry example values only
+!tests/fixtures/*.env
 .build/
 node_modules/
 __pycache__/
