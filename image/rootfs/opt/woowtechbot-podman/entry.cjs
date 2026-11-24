@@ -127,6 +127,16 @@ function turnsMaxRunning(env) {
   return value;
 }
 
+// The label of this server in the apps (OMB_SERVER_NAME), as bot.serverName on PaaS. Empty keeps the
+// app's own default, the container's host name.
+function serverName(env) {
+  const value = text(env, 'WTB_SERVER_NAME');
+  if (value.length > 64 || /[\x00-\x1f\x7f]/.test(value)) {
+    throw new ConfigError('WTB_SERVER_NAME: must be at most 64 printable characters');
+  }
+  return value;
+}
+
 // validateWithAddon(options, addonDir): run the add-on's own checks, the ones supervisor.cjs and
 // launcher.cjs run at start, so a value they would refuse is reported now with its setting name.
 const OPTION_SETTING = Object.freeze({
@@ -184,10 +194,11 @@ function writeOptions(options, { runDir = RUN_DIR, dataDir = DATA_DIR, checkTmpf
 
 // The add-on and the bots it runs get the image's environment, not this edition's settings or
 // installer knobs (WTB_*, WOOW_WTB_*): they already reached the add-on through options.json.
-function addonEnvironment(env, turns) {
+function addonEnvironment(env, turns, name = '') {
   const out = {};
   for (const [key, value] of Object.entries(env)) if (!/^(WTB_|WOOW_WTB_)/.test(key)) out[key] = value;
   if (turns !== 'auto') out.OMB_TURNS_MAX_RUNNING = turns;
+  if (name) out.OMB_SERVER_NAME = name;
   return out;
 }
 
@@ -213,10 +224,11 @@ function selfTest(addonDir = ADDON) {
 function main(argv = process.argv.slice(2), env = process.env) {
   const mode = argv[0] || 'run';
   if (mode === '--self-test') { selfTest(); console.log('entry: self-test passed'); return; }
-  let options, turns;
+  let options, turns, name;
   try {
     options = buildOptions(env);
     turns = turnsMaxRunning(env);
+    name = serverName(env);
     validateWithAddon(options);
   } catch (error) {
     if (!(error instanceof ConfigError)) throw error;
@@ -232,7 +244,7 @@ function main(argv = process.argv.slice(2), env = process.env) {
     process.exit(EX_CONFIG);
   }
   const child = spawn(process.execPath, [path.join(ADDON, 'supervisor.cjs')], {
-    stdio: 'inherit', env: addonEnvironment(env, turns),
+    stdio: 'inherit', env: addonEnvironment(env, turns, name),
   });
   for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) {
     process.on(signal, () => { if (child.exitCode === null) child.kill(signal); });
@@ -245,6 +257,6 @@ function main(argv = process.argv.slice(2), env = process.env) {
 
 module.exports = {
   EX_CONFIG, SECRET_OPTIONS, ConfigError, addonEnvironment, assertTmpfs, buildOptions, readSecret,
-  selfTest, turnsMaxRunning, validateWithAddon, writeOptions,
+  selfTest, serverName, turnsMaxRunning, validateWithAddon, writeOptions,
 };
 if (require.main === module) main();

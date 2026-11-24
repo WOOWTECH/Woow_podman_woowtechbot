@@ -79,6 +79,16 @@ test('turns: default 3, auto, a range check', () => {
   assert.throws(() => entry.turnsMaxRunning({ WTB_TURNS_MAX_RUNNING: '65' }), ConfigError);
 });
 
+test('the server name: empty keeps the app default, a name is passed on, bad ones are refused', () => {
+  assert.equal(entry.serverName({}), '');
+  assert.equal(entry.serverName({ WTB_SERVER_NAME: '  woowtechbot-家裡  ' }), 'woowtechbot-家裡');
+  assert.equal(entry.addonEnvironment({}, '3', 'my-bot').OMB_SERVER_NAME, 'my-bot');
+  assert.equal(entry.addonEnvironment({}, '3').OMB_SERVER_NAME, undefined);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'x'.repeat(65) }), ConfigError);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'a\nb' }), ConfigError);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'a\tb' }), ConfigError);
+});
+
 test('the add-on gets no WTB_ or WOOW_WTB_ variables, and the turn limit', () => {
   const env = entry.addonEnvironment({ WTB_PUBLIC_URL: 'x', WOOW_WTB_PORT: '1', TZ: 'Asia/Taipei', OMB_X: '1' }, '3');
   assert.deepEqual(env, { TZ: 'Asia/Taipei', OMB_X: '1', OMB_TURNS_MAX_RUNNING: '3' });
