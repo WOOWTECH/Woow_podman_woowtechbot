@@ -118,6 +118,7 @@ scripts/hermes.sh status
 - **Hermes 不會借用 Claude 和 Codex 引擎的登入。** 上游預設會把那些登入的模型也列出來，選了就會接管並改寫登入檔，可能害原本的引擎被登出。映像用管理員設定檔 `/etc/hermes/config.yaml` 關掉它，使用者和 bot 都改不了。要用 Claude 訂閱請選 Claude 引擎。
 - 第一次回覆比較慢，要先啟動 Hermes 的背景程式；閒置 10 分鐘後它會自己結束。所有 Hermes 對話共用這個程式，映像讓它獨立啟動：App 關掉一個閒置的對話，不會中斷其他 bot 正在進行的對話。
 - 記憶體：第一個 Hermes 對話約 0.8 GB，之後每個約 0.4 GB。同時用幾個 Hermes 對話時，`WOOW_WTB_MEMORY` 至少留 4g。
+- bot 設成「詢問」時，Hermes 預設先讓模型判斷危險指令（智慧核准）：判斷安全就直接執行，拿不準才跳核准卡。要危險指令每次都問，執行 `scripts/hermes.sh run config set approvals.mode manual`；改回來用 `scripts/hermes.sh run config unset approvals.mode`。
 - 有些模型不接受 ChatGPT 帳號，錯誤會顯示在對話裡。
 - Hermes 用 ChatGPT 帳號時，用的是那個帳號的 Codex 額度。用完時對話會寫 `quota exhausted (429)` 和多久以後恢復；恢復前指定別的模型會出現 `model_resolution_failed`，也是同一個原因。
 
