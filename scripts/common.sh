@@ -58,7 +58,8 @@ app_apply_sets() {
       continue
     fi
     ql_env_set "$ENV_FILE" "$k" "${kv#*=}"
-    ql_info "set $k in $ENV_FILE"
+    # ql_env_set already says "[dry-run] would set" when nothing is written
+    [[ ${QL_DRY_RUN:-0} == 1 ]] || ql_info "set $k in $ENV_FILE"
   done
 }
 
