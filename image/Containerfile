@@ -1,9 +1,31 @@
-# image/Containerfile: the Podman edition = the HA add-on image, unchanged, plus this repo's entry
-# point, pairing command and health check under /opt/woowtechbot-podman. scripts/install.sh builds
-# it on the host as localhost/woowtechbot-podman:<VERSION>; the base is pinned by digest in
-# scripts/common.sh (WTB_BASE_IMAGE).
+# image/Containerfile: the Podman edition = the HA add-on image plus the Hermes engine and this repo's
+# entry point, pairing command and health check under /opt/woowtechbot-podman. scripts/install.sh
+# builds it on the host as localhost/woowtechbot-podman:<VERSION>; both images it starts from are
+# pinned by digest in scripts/common.sh (WTB_BASE_IMAGE, WTB_HERMES_IMAGE).
 ARG BASE_IMAGE
+ARG HERMES_IMAGE
+FROM ${HERMES_IMAGE} AS hermes
 FROM ${BASE_IMAGE}
+# The Hermes engine (`hermes acp`), read-only under /opt/hermes, as the PaaS image and the HA add-on
+# (from 0.1.7-rc.15) have it. It comes first, and only the Hermes image and payload.py decide it, so
+# a new version of this repo reuses this large layer. It is copied from the mounted official image,
+# so no second copy of it is kept in the image store.
+ARG HERMES_IMAGE
+COPY hermes/payload.py /opt/woowtechbot-podman/hermes/payload.py
+RUN --mount=type=bind,from=hermes,source=/opt/hermes,target=/run/hermes-official \
+    echo "Hermes from ${HERMES_IMAGE}" && \
+    /run/hermes-official/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 -I \
+      /opt/woowtechbot-podman/hermes/payload.py /run/hermes-official /opt/hermes
+COPY hermes/hermes.sh hermes/managed.yaml hermes/patch-app.mjs /opt/woowtechbot-podman/hermes/
+RUN install -m 0755 /opt/woowtechbot-podman/hermes/hermes.sh /usr/local/bin/hermes && \
+    install -d -m 0755 /etc/hermes && \
+    install -m 0644 /opt/woowtechbot-podman/hermes/managed.yaml /etc/hermes/config.yaml && \
+    node /opt/woowtechbot-podman/hermes/patch-app.mjs /app/dist-server && node --check /app/dist-server/index.js
+# The first run writes a Hermes home; a tmpfs keeps it out of the image.
+RUN --mount=type=tmpfs,target=/var/tmp/hermes-check \
+    HOME=/var/tmp/hermes-check HERMES_HOME=/var/tmp/hermes-check PYTHONDONTWRITEBYTECODE=1 hermes --version
+# Hermes needs about 30 s for its first session on a small host; the app gives its model list 15 s.
+ENV HERMES_ACP_MODELS_TIMEOUT_MS=60000
 ARG WTB_VERSION
 ARG BASE_IMAGE
 COPY rootfs/opt/woowtechbot-podman/ /opt/woowtechbot-podman/
@@ -12,6 +34,6 @@ RUN test -n "$WTB_VERSION" && chmod 0755 /opt/woowtechbot-podman && chmod 0644 /
     node --check /opt/woowtechbot-podman/entry.cjs && node --check /opt/woowtechbot-podman/pair.cjs && \
     node --check /opt/woowtechbot-podman/healthcheck.cjs && node /opt/woowtechbot-podman/entry.cjs --self-test
 LABEL io.woowtech.app="woowtechbot" org.opencontainers.image.version="${WTB_VERSION}" \
-      io.woowtech.base-image="${BASE_IMAGE}" \
+      io.woowtech.base-image="${BASE_IMAGE}" io.woowtech.hermes-image="${HERMES_IMAGE}" \
       org.opencontainers.image.source="https://github.com/WOOWTECH/Woow_podman_woowtechbot"
 CMD ["node", "/opt/woowtechbot-podman/entry.cjs"]

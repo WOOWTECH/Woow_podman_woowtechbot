@@ -3,6 +3,25 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.14-4 (unreleased)
+
+- Hermes engine: Hermes Agent v0.22.5 (release commit bf0203a7) in the image, read-only under
+  `/opt/hermes`, as PaaS and the HA add-on (from 0.1.7-rc.15) have it: copied from the official image,
+  pinned by digest, without its browser package; another release is refused
+  (`image/hermes/payload.py`). `scripts/install.sh` pulls that image once, for the build.
+- The app offers Hermes only when Hermes' settings name a model (`image/hermes/patch-app.mjs`, the
+  change PaaS and HA build from source as patch 0014). Without it, a default bot would follow a Hermes
+  that nobody has set up. Both go away with a base image that has Hermes of its own.
+- `/etc/hermes/config.yaml` (Hermes' administrator-managed settings): Hermes does not adopt the sign-ins
+  of the Claude and Codex engines. By default it offers their models, and using one rewrites the sign-in
+  file, which can sign the other engine out.
+- `scripts/hermes.sh`: a model account for Hermes (a ChatGPT account by device code, or an API key asked
+  for without showing it), the model, the status.
+- The Cockpit page and `pair.cjs state` show Hermes as ready only when it has a model.
+- `HERMES_ACP_MODELS_TIMEOUT_MS=60000`, as on HA: the first session takes about 30 s on a small host.
+- Tests: `tests/hermes.sh` (the built image, offline: the install, the set-up, three turns with a scripted
+  model service, the bot's tools, Claude Code's sign-in left alone), `tests/hermes.test.cjs`.
+
 ## 0.1.7-rc.14-3 (unreleased)
 
 - Cockpit page (`cockpit/`, `sudo scripts/cockpit-page.sh install`): the HA add-on's administrator

@@ -1,0 +1,8 @@
+# /etc/hermes/config.yaml: Hermes settings this image decides. Hermes reads them after its own
+# ~/.hermes/config.yaml, and neither a user nor a bot can change them.
+auth:
+  # The Claude and Codex engines of woowtechbot are signed in for themselves. By default Hermes offers
+  # the models of those sign-ins too, and using one takes over and rewrites the sign-in (the tokens are
+  # single-use, so whichever program refreshes first signs the other one out). Hermes uses the accounts
+  # it is given itself.
+  adopt_external_logins: false

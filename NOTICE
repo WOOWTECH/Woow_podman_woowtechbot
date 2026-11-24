@@ -10,3 +10,8 @@ licensed enterprise/ tree of OpenMausBot is not used.
 The container images referenced by this packaging carry their own LICENSE and
 NOTICE files, including the upstream OpenMausBot attributions. This project is
 not endorsed by the OpenMausBot authors.
+
+The local image built by scripts/install.sh also contains Hermes Agent
+(https://github.com/NousResearch/hermes-agent), Copyright (c) 2025 Nous
+Research, MIT License, copied from the official image; its LICENSE is
+/opt/hermes/LICENSE in the image. This project is not endorsed by Nous Research.

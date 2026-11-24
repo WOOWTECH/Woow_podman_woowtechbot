@@ -61,6 +61,6 @@ if ((purge_images)); then
   else
     mapfile -t imgs < <(podman images --filter reference='localhost/woowtechbot-podman' --format '{{.ID}}' | sort -u)
     ((${#imgs[@]} == 0)) || podman rmi -f "${imgs[@]}" >/dev/null 2>&1 || ql_warn "could not remove every local image"
-    ql_info "removed ${#imgs[@]} local woowtechbot image(s); the base image $WTB_BASE_TAG is left"
+    ql_info "removed ${#imgs[@]} local woowtechbot image(s); the base image $WTB_BASE_TAG and $WTB_HERMES_TAG are left"
   fi
 fi

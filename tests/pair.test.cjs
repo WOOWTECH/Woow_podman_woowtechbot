@@ -61,6 +61,8 @@ test.beforeEach(() => {
       { instanceId: 'claude', displayName: 'Claude', snapshot: { state: 'available', authenticated: false } },
       { instanceId: 'openai', displayName: 'OpenAI', snapshot: { state: 'available' } },
       { instanceId: 'grok', displayName: 'Grok', snapshot: { state: 'unavailable' } },
+      { instanceId: 'hermes', displayName: 'Hermes', driverKind: 'hermesAgent', models: { default: '', options: [] },
+        snapshot: { state: 'available', authenticated: true } },
     ],
   };
 });
@@ -226,7 +228,12 @@ test('state is what the Cockpit page shows, and never a code', async () => {
   assert.equal(view.publicUrl, 'https://bot.example.com');
   assert.equal(view.publishedUrl, 'https://apps.example.net');
   assert.equal(view.emailReady, false, 'the relay needs its token too');
-  assert.deepEqual(view.engines, [{ id: 'claude', name: 'Claude', ready: false }, { id: 'openai', name: 'OpenAI', ready: true }]);
+  assert.deepEqual(view.engines, [{ id: 'claude', name: 'Claude', ready: false }, { id: 'openai', name: 'OpenAI', ready: true },
+    { id: 'hermes', name: 'Hermes', ready: false }], 'Hermes without a model is not ready');
+  state.instances.at(-1).models.options.push({ id: 'hermes-default' });
+  const later = capture();
+  await pair.run(['state'], { stdout: later.stdout });
+  assert.equal(JSON.parse(later.text()).engines.at(-1).ready, true);
   assert.deepEqual(view.pending.map(p => [p.id, p.kind]), [['old-browser', null], ['ha-phone', null], ['mine', 'phone']]);
   assert.deepEqual(view.devices.map(d => d.id), ['sess-1']);
   assert.doesNotMatch(out.text(), /SECRET-CODE|tokenHash/);

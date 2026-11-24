@@ -36,6 +36,15 @@ want='8080/tcp'
 got=$(podman port woowtechbot | sed -E 's/ ->.*//' | sort -u | tr '\n' ' ' | sed 's/ $//')
 if [[ $got == "$want" ]]; then ok "published: only the entrance${published:+ and the published site} ($got)"; else bad "published ports are '$got', want '$want'"; fi
 check "not host networking" test "$(podman inspect --format '{{.HostConfig.NetworkMode}}' woowtechbot)" != host
+check "the Hermes engine is the reviewed release, read-only for the bots" podman exec -u maus woowtechbot sh -c \
+  'grep -q "\"baseVersion\": \"0.22.5\"" /opt/hermes/install-stamp.json && test -x /usr/local/bin/hermes && test ! -w /opt/hermes && test ! -w /opt/hermes/.venv'
+# the app probes its engines for a while after a start
+check "the app has the Hermes engine" in_box node -e '
+  const seen = async () => (await (await fetch("http://127.0.0.1:8799/api/instances")).json())
+    .instances.some(entry => entry.driverKind === "hermesAgent" && entry.snapshot?.state === "available");
+  (async () => { for (let n = 0; n < 30; n++) { if (await seen().catch(() => false)) process.exit(0); await new Promise(r => setTimeout(r, 2000)); } process.exit(1); })()'
+check "Hermes does not adopt the Claude and Codex sign-ins" podman exec -u maus -e HOME=/tmp woowtechbot sh -c \
+  'test ! -w /etc/hermes && test ! -w /etc/hermes/config.yaml && grep -qx "  adopt_external_logins: false" /etc/hermes/config.yaml'
 check "/data/options.json links into the private tmpfs" in_box sh -c \
   'test -L /data/options.json && test "$(readlink /data/options.json)" = /run/woowtechbot/options.json && grep -q " /run/woowtechbot tmpfs " /proc/self/mounts'
 check "the options file is root-only (0600)" in_box sh -c 'test "$(stat -c %a:%U /run/woowtechbot/options.json)" = 600:root'

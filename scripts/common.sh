@@ -20,6 +20,12 @@ ENV_CREDENTIAL_ALLOW=''
 # image of WOOWTECH/Woow_ha_woowtechbot_add_on 0.1.7-rc.14; update both lines together.
 WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14
 WTB_BASE_IMAGE=ghcr.io/woowtech/amd64-woowtechbot@sha256:cebe1d555dadacd6f4877aae7c5fb651060f52af62be8b3b74874d3faa4c0e25
+# The official Hermes Agent image (public on Docker Hub), pinned by its OCI index digest: v0.22.5, the
+# release the PaaS image and the HA add-on (from 0.1.7-rc.15) use. Only its /opt/hermes goes into the
+# local image, and image/hermes/payload.py refuses another release; change the three together. With a
+# base that has Hermes of its own, this and image/hermes go away.
+WTB_HERMES_TAG=docker.io/nousresearch/hermes-agent:v0.22.5
+WTB_HERMES_IMAGE=docker.io/nousresearch/hermes-agent@sha256:9c5561579f3ffdf333401797094ac3a743738d6c25d40f4331c7bf77b694238d
 # the local image: one tag per repo VERSION, so an upgrade keeps the previous image for rollback
 WTB_VERSION=$(cat "$REPO/VERSION")
 WTB_IMAGE=localhost/woowtechbot-podman:$WTB_VERSION

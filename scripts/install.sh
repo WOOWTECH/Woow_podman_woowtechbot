@@ -66,13 +66,27 @@ wtb_pull_base() {
   [[ -z $dir ]] || rm -rf "$dir"
 }
 
+# wtb_pull_hermes: the official Hermes image, which is only needed to build the local one.
+wtb_pull_hermes() {
+  local graph free_kib
+  if podman image exists "$WTB_HERMES_IMAGE"; then return 0; fi
+  if [[ $rebuild == 0 ]] && podman image exists "$WTB_IMAGE"; then return 0; fi
+  if [[ $dry == 1 ]]; then ql_info "[dry-run] would pull $WTB_HERMES_TAG ($WTB_HERMES_IMAGE)"; return 0; fi
+  graph=$(podman info --format '{{.Store.GraphRoot}}')
+  free_kib=$(df -Pk -- "$graph" | awk 'NR == 2 { print $4 }')
+  ((free_kib > 6 * 1024 * 1024)) || ql_die "less than 6 GiB free under $graph; Hermes needs about 3 GiB for the pull and 2 GiB for the build"
+  ql_info "pulling $WTB_HERMES_TAG (about 1 GB to download, 3 GiB on disk)"
+  podman pull "$WTB_HERMES_IMAGE" >/dev/null || ql_die "cannot pull $WTB_HERMES_IMAGE"
+}
+
 # wtb_build_image [--force]: build the local image; returns 0 when it built one.
 wtb_build_image() {
   if [[ ${1:-} != --force ]] && podman image exists "$WTB_IMAGE"; then return 1; fi
   if [[ $dry == 1 ]]; then ql_info "[dry-run] would build $WTB_IMAGE"; return 1; fi
-  ql_info "building $WTB_IMAGE on $WTB_BASE_TAG"
+  ql_info "building $WTB_IMAGE on $WTB_BASE_TAG, with $WTB_HERMES_TAG"
   podman build --pull=never --network=none -f "$REPO/image/Containerfile" \
-    --build-arg "BASE_IMAGE=$WTB_BASE_IMAGE" --build-arg "WTB_VERSION=$WTB_VERSION" \
+    --build-arg "BASE_IMAGE=$WTB_BASE_IMAGE" --build-arg "HERMES_IMAGE=$WTB_HERMES_IMAGE" \
+    --build-arg "WTB_VERSION=$WTB_VERSION" \
     -t "$WTB_IMAGE" "$REPO/image" >/dev/null || ql_die "building $WTB_IMAGE failed"
 }
 
@@ -143,6 +157,7 @@ done
 
 # ---- 5. images, then the settings check -------------------------------------------------------
 wtb_pull_base
+wtb_pull_hermes
 image_rebuilt=0
 if ((rebuild)); then
   if wtb_build_image --force; then image_rebuilt=1; fi
@@ -197,4 +212,5 @@ $APP $WTB_VERSION is installed and healthy (image $WTB_BASE_TAG).
              scripts/pair.sh phone     phone app QR and code (needs WTB_PUBLIC_URL)
   Settings   $ENV_FILE (edit, then run scripts/install.sh again)
   Secrets    scripts/secret.sh list
+  Hermes     scripts/hermes.sh chatgpt   give the Hermes engine a model (a ChatGPT account, for example)
 EOF

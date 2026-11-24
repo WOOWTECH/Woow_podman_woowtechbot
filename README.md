@@ -6,17 +6,17 @@ woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://gith
 
 ## 它怎麼運作
 
-Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
+Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14`，以 digest 固定），外面只加 Hermes 引擎和一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
 
 1. 讀 `~/.config/woowtechbot/woowtechbot.env` 的 `WTB_*` 設定，以及選用的 podman secret；
 2. 照 HA 外掛 `config.yaml` 的規則檢查，再用外掛自己的檢查程式檢查；有錯就停下，並指出是哪個設定（結束碼 78）；
 3. 把設定寫到容器內的私有 tmpfs，`/data/options.json` 只是連結，所以帳密不會留在資料磁碟或它的備份裡；
-4. 執行 HA 外掛原本的程式，程式不做任何修改。
+4. 執行 HA 外掛原本的程式。唯一的修改在建置映像時完成：Hermes 還沒設定模型時，App 不會把它列為可用（見「Hermes 引擎」）。
 
 ## 需求
 
 - x86_64 主機（映像只有 amd64）、rootless Podman 4.9 以上（Ubuntu 24.04）、systemd user 與 linger。
-- 映像約 6.6 GiB，資料建議至少留 20 GB；容器預設上限 4 GiB 記憶體、2 核。
+- 映像約 8.4 GiB，建置時另外需要官方 Hermes 映像約 3 GiB；資料建議至少留 20 GB；容器預設上限 4 GiB 記憶體、2 核。
 - GHCR 讀取權限：先 `podman login ghcr.io`（read:packages 權杖），或安裝時加 `--gh-auth` 使用 gh CLI 的登入。
 
 ## 安裝
@@ -96,6 +96,29 @@ sudo scripts/cockpit-page.sh uninstall
 只有管理員群組（預設 `sudo`，沒有就用 `wheel`，或用 `--group` 指定）的成員在選單裡看得到這一頁，而且要開啟 Cockpit 頂端的「管理員存取權限」才能使用，就像 HA 這一頁只給 HA 管理員。頁面透過一支 root 小程式工作：它用 bot 的帳號執行 podman，配對交給容器裡的 `pair.cjs`，不會重啟或更改 bot。每位管理員的配對碼分開，重新產生只會替換自己的。產生、取消和登出都會記在系統日誌（`journalctl -t woowtech-cockpit-woowtechbot`），只記誰做了什麼，不記配對碼。
 
 頁面需要 0.1.7-rc.14-3 以上的映像；映像比較舊時，頁面會提示先執行 `scripts/install.sh`。
+
+## Hermes 引擎
+
+[Hermes Agent](https://github.com/NousResearch/hermes-agent)（Nous Research，MIT）是 App 可以選的 AI 引擎之一。映像裡已經裝好 **v0.22.5**，和 PaaS、HA 外掛（0.1.7-rc.15 起）同一個官方版本：
+
+- 從官方映像 `nousresearch/hermes-agent` 複製，以 digest 固定；`image/hermes/payload.py` 只接受審核過的這一版。只拿掉它自帶的瀏覽器，bot 本來就有 Chrome。
+- 裝在 `/opt/hermes`，bot 不能修改，也不會自己更新；新版本跟著映像走。
+- 設定、登入和對話紀錄在資料磁碟的 `~/.hermes`，重啟和升級都會保留。
+
+Hermes 要先有自己的模型帳號，App 才會把它列為可選：
+
+```bash
+scripts/hermes.sh chatgpt                    # 用 ChatGPT 帳號：顯示網址和代碼，15 分鐘內在瀏覽器核准
+scripts/hermes.sh key openrouter 模型名稱     # 或用 API 金鑰（輸入時不顯示）
+scripts/hermes.sh status
+```
+
+設好之後，在 App 建立或編輯 bot，引擎選 Hermes。bot 的工具照常可用：讀附件、附檔、發布網站、請其他 bot 幫忙。Hermes 用 `tool_search` 找到這些工具，不會全部列出來。
+
+- **Hermes 不會借用 Claude 和 Codex 引擎的登入。** 上游預設會把那些登入的模型也列出來，選了就會接管並改寫登入檔，可能害原本的引擎被登出。映像用管理員設定檔 `/etc/hermes/config.yaml` 關掉它，使用者和 bot 都改不了。要用 Claude 訂閱請選 Claude 引擎。
+- 第一次回覆比較慢，要先啟動 Hermes 的背景程式；閒置 10 分鐘後它會自己結束。
+- 記憶體：第一個 Hermes 對話約 0.8 GB，之後每個約 0.4 GB。同時用幾個 Hermes 對話時，`WOOW_WTB_MEMORY` 至少留 4g。
+- 有些模型不接受 ChatGPT 帳號，錯誤會顯示在對話裡。
 
 ## 對外網址
 

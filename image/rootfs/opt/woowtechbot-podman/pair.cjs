@@ -105,6 +105,12 @@ async function signOut(id) {
   return device;
 }
 
+// Hermes has no sign-in of its own that the app knows: it is ready once its settings give it a model.
+function engineReady(engine) {
+  if (engine.driverKind === 'hermesAgent' && !engine.models?.options?.length) return false;
+  return engine.snapshot.authenticated !== false;
+}
+
 // The Cockpit page's view. The mail and administrator lines are the HA administrator page's: whether
 // the settings are there, never their values. An engine the image does not have is left out.
 async function view(by) {
@@ -118,7 +124,7 @@ async function view(by) {
     engines: (Array.isArray(instances.instances) ? instances.instances : [])
       .filter(engine => engine?.snapshot?.state === 'available')
       .map(engine => ({ id: String(engine.instanceId), name: String(engine.displayName || engine.instanceId),
-        ready: engine.snapshot.authenticated !== false })),
+        ready: engineReady(engine) })),
     pending: live.map(({ id, label, expiresAt }) => ({ id, label, expiresAt,
       kind: ['browser', 'phone'].find(kind => label === labelFor(kind, by)) || null })),
     devices: signedIn,
