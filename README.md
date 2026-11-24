@@ -119,6 +119,7 @@ scripts/hermes.sh status
 - 第一次回覆比較慢，要先啟動 Hermes 的背景程式；閒置 10 分鐘後它會自己結束。
 - 記憶體：第一個 Hermes 對話約 0.8 GB，之後每個約 0.4 GB。同時用幾個 Hermes 對話時，`WOOW_WTB_MEMORY` 至少留 4g。
 - 有些模型不接受 ChatGPT 帳號，錯誤會顯示在對話裡。
+- Hermes 用 ChatGPT 帳號時，用的是那個帳號的 Codex 額度。用完時對話會寫 `quota exhausted (429)` 和多久以後恢復；恢復前指定別的模型會出現 `model_resolution_failed`，也是同一個原因。
 
 ## 對外網址
 
