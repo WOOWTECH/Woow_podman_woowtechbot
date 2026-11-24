@@ -22,8 +22,12 @@ jobs:
           node-version: "24"   # the base image runs Node 24
       - name: Syntax of the files copied into the image
         run: for f in image/rootfs/opt/woowtechbot-podman/*.cjs; do node --check "$f"; done
-      - name: Entry point and pairing command tests
+      - name: Entry point, pairing command and Cockpit page tests
         run: node --test tests/*.test.cjs
+      - name: Syntax of the Cockpit page and the lab tools
+        run: for f in cockpit/page/bot.js tests/cockpit-lab/fake-app.cjs tests/cockpit-page.cjs; do node --check "$f"; done
+      - name: Cockpit page helper (fake podman, the real pair.cjs, a stand-in app)
+        run: python3 tests/test_cockpit_helper.py -v
 
   repo:
     runs-on: ubuntu-24.04

@@ -3,6 +3,25 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.14-3 (unreleased)
+
+- Cockpit page (`cockpit/`, `sudo scripts/cockpit-page.sh install`): the HA add-on's administrator
+  page in Cockpit's Tools, for the members of the administrator group with administrative access on.
+  Browser and phone pairing (QR code, server address, code, countdown, copy, cancel), the bot's status
+  (container, versions, addresses, AI connections, first administrator and email sign-in settings)
+  and the signed-in devices, with sign-out. A root helper runs podman as the bot's account and
+  `pair.cjs` inside the container, never restarts or changes the bot, gives each administrator codes
+  of their own and logs every change (`journalctl -t woowtech-cockpit-woowtechbot`) without the code.
+  Non-administrators get neither the page nor its files.
+- `scripts/pair.sh devices` and `signout DEVICE`. `pair.cjs state` (the page's view, never a code) and
+  `--by ACCOUNT` (an administrator's own codes).
+- A new code that cannot be shown (the QR code cannot be drawn) is cancelled instead of left usable.
+- The browser pairing text says to press 「連線」.
+- Tests: `tests/test_cockpit_helper.py` (the helper with a fake podman, the real `pair.cjs` and a
+  stand-in app), `tests/page.test.cjs` (static checks of the page), and `tests/cockpit-lab.sh` with
+  `tests/cockpit-page.cjs`: the page in a real Cockpit 362 with sudo and rootless Podman, in a
+  throwaway container, driven by Playwright.
+
 ## 0.1.7-rc.14-2 (unreleased)
 
 - Optional Cloudflare Tunnel connectors of the bot's own (`quadlet/optional`): `woowtechbot-tunnel`

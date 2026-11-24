@@ -5,6 +5,8 @@
 #   scripts/pair.sh phone              the phone app's QR, server address and code (needs WTB_PUBLIC_URL)
 #   scripts/pair.sh list               codes not used yet
 #   scripts/pair.sh cancel browser|phone|all
+#   scripts/pair.sh devices            the signed-in devices
+#   scripts/pair.sh signout DEVICE     sign one device out (its id is in the devices list)
 #   add --json for machine-readable output
 #
 # Only someone who can run podman as this account can use it: on this edition that account is the
@@ -19,8 +21,8 @@ REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 # shellcheck source=common.sh
 . "$REPO/scripts/common.sh"
 case ${1:-} in
-  browser | phone | list | cancel) ;;
-  -h | --help | '') sed -n '2,15p' "$0"; exit 0 ;;
+  browser | phone | list | cancel | devices | signout) ;;
+  -h | --help | '') sed -n '2,17p' "$0"; exit 0 ;;
   *) ql_die "unknown command ${1} (see --help)" ;;
 esac
 ql_require_rootless

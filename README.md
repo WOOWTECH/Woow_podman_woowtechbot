@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3），手機 App 的配對、聊天、附件上下傳、背景返回與短暫斷線也已在 Pixel Tablet 上實測；Email 登入信的代寄憑證已裝好，等實際收信驗收；Cockpit 管理頁與備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3），手機 App 的配對、聊天、附件上下傳、背景返回與短暫斷線也已在 Pixel Tablet 上實測；Cockpit 管理頁已安裝在這台主機並實際使用；Email 登入信的代寄憑證已裝好，等實際收信驗收；備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 
@@ -69,13 +69,33 @@ scripts/pair.sh browser   # 瀏覽器一次性配對碼與連結
 scripts/pair.sh phone     # 手機 App：終端機顯示 QR，另附伺服器網址與配對碼（需要 WTB_PUBLIC_URL）
 scripts/pair.sh list
 scripts/pair.sh cancel browser|phone|all
+scripts/pair.sh devices   # 登入中的裝置
+scripts/pair.sh signout 裝置代號
 ```
 
 規則和 HA 管理員配對頁相同：配對碼 10 分鐘內有效、只能用一次，取得管理員權限；同一類重新產生時，舊的那組會作廢；取消不會讓已登入的裝置登出。配對碼只顯示在你的終端機，不會寫進日誌。
 
 在瀏覽器打開配對連結後，配對碼會自動帶入，按「連線」就會登入。頁面上「在伺服器上執行 npx openmausbot pair」是上游的說明文字；在 Podman 上請改用 `scripts/pair.sh browser`。
 
-**誰算管理員**：能在這台主機用這個帳號執行 podman 的人，就能產生配對碼，等於 HA 上的管理員。之後的 Cockpit 管理頁也會限定只有管理員能用。
+**誰算管理員**：能在這台主機用這個帳號執行 podman 的人，以及 Cockpit 管理員群組裡、開啟了管理員存取權限的人（見下一節），就能產生配對碼，等於 HA 上的管理員。
+
+## Cockpit 管理頁
+
+主機有 Cockpit（362 以上）時，可以把 HA 側邊欄的那一頁裝進 Cockpit，左側「工具」底下會多一個「woowtechbot」：
+
+- 按鈕產生瀏覽器配對碼和連結，或手機 App 的 QR Code、伺服器網址與配對碼，有倒數、複製和取消。
+- bot 的狀態：容器、版本、啟動時間、兩個網址、AI 模型有沒有登入、首次初始化信箱和 Email 登入服務有沒有設定。
+- 登入中的裝置，可以登出其中一台。
+
+```bash
+sudo scripts/cockpit-page.sh install     # bot 的帳號預設是這份 repo 的擁有者，或用 --owner 指定
+scripts/cockpit-page.sh status
+sudo scripts/cockpit-page.sh uninstall
+```
+
+只有管理員群組（預設 `sudo`，沒有就用 `wheel`，或用 `--group` 指定）的成員在選單裡看得到這一頁，而且要開啟 Cockpit 頂端的「管理員存取權限」才能使用，就像 HA 這一頁只給 HA 管理員。頁面透過一支 root 小程式工作：它用 bot 的帳號執行 podman，配對交給容器裡的 `pair.cjs`，不會重啟或更改 bot。每位管理員的配對碼分開，重新產生只會替換自己的。產生、取消和登出都會記在系統日誌（`journalctl -t woowtech-cockpit-woowtechbot`），只記誰做了什麼，不記配對碼。
+
+頁面需要 0.1.7-rc.14-3 以上的映像；映像比較舊時，頁面會提示先執行 `scripts/install.sh`。
 
 ## 對外網址
 
@@ -144,7 +164,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 
 ## 已知限制
 
-- 沒有 HA 側邊欄，也沒有 HA 管理員驗證，改由主機（以及之後的 Cockpit）權限決定誰是管理員。
+- 沒有 HA 側邊欄，也沒有 HA 管理員驗證；改由主機帳號與 Cockpit 管理員群組決定誰是管理員（見「Cockpit 管理頁」）。
 - 沒有 HA Supervisor 備份；備份與還原腳本在後續階段提供。
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
