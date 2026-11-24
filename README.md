@@ -137,6 +137,7 @@ scripts/install.sh
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
 - 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
 - 官方 App 2.0.0 從檔案選擇器選 CSV 會被拒，可以改成 .txt 或壓成 ZIP（上游 #7084）。配對連結沒有確認畫面。
+- 發布的網站請用 `.js` 當 JavaScript module 的副檔名：`.mjs` 會被當成一般下載檔送出，瀏覽器不會執行（HA、PaaS 相同）。
 - Codex 的工具範圍一定要保留 `native:*`。
 - 模型帳號的用量由各帳號自己負責。
 
