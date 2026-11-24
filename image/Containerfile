@@ -16,7 +16,7 @@ RUN --mount=type=bind,from=hermes,source=/opt/hermes,target=/run/hermes-official
     echo "Hermes from ${HERMES_IMAGE}" && \
     /run/hermes-official/tools/python-3.14.9+20261021-linux-x64/bin/python3.14 -I \
       /opt/woowtechbot-podman/hermes/payload.py /run/hermes-official /opt/hermes
-COPY hermes/hermes.sh hermes/managed.yaml hermes/patch-app.mjs /opt/woowtechbot-podman/hermes/
+COPY hermes/hermes.sh hermes/gateway.py hermes/managed.yaml hermes/patch-app.mjs /opt/woowtechbot-podman/hermes/
 RUN install -m 0755 /opt/woowtechbot-podman/hermes/hermes.sh /usr/local/bin/hermes && \
     install -d -m 0755 /etc/hermes && \
     install -m 0644 /opt/woowtechbot-podman/hermes/managed.yaml /etc/hermes/config.yaml && \

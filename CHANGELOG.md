@@ -17,6 +17,10 @@ the revision of this repo's packaging on it.
   file, which can sign the other engine out.
 - `scripts/hermes.sh`: a model account for Hermes (a ChatGPT account by device code, or an API key asked
   for without showing it), the model, the status.
+- The gateway that all Hermes conversations share is started on its own (`image/hermes/gateway.py`, run by
+  the `hermes` launcher before a conversation), and ended with the container. By itself it is a child of
+  the conversation that started it, and the app ends a closed conversation's whole process tree: the
+  other bots' turns were interrupted ("Gateway disconnected; turn outcome is unknown").
 - The Cockpit page and `pair.cjs state` show Hermes as ready only when it has a model.
 - `HERMES_ACP_MODELS_TIMEOUT_MS=60000`, as on HA: the first session takes about 30 s on a small host.
 - Tests: `tests/hermes.sh` (the built image, offline: the install, the set-up, three turns with a scripted

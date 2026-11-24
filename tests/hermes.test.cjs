@@ -94,3 +94,21 @@ test('the launcher runs the install in the image', () => {
   assert.match(text, /^exec \/opt\/hermes\/\.venv\/bin\/hermes "\$@"$/m);
   assert.equal(spawnSync('sh', ['-n', path.join(dir, 'hermes.sh')]).status, 0);
 });
+
+test('a conversation starts the shared gateway on its own first, once Hermes has a model', () => {
+  const root = tmp();
+  const log = path.join(root, 'log');
+  const python = path.join(root, 'python');
+  fs.writeFileSync(python, `#!/bin/sh\nprintf '%s\\n' "$*" >> ${log}\n`, { mode: 0o755 });
+  const run = (...args) => {
+    fs.rmSync(log, { force: true });
+    spawnSync('sh', [path.join(dir, 'hermes.sh'), ...args], { env: { PATH: process.env.PATH, HERMES_HOME: root, HERMES_PYTHON: python } });
+    return fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n') : [];
+  };
+  assert.deepEqual(run('acp'), [], 'no settings yet');
+  fs.writeFileSync(path.join(root, 'config.yaml'), 'display:\n  model: x\n');
+  assert.deepEqual(run('acp'), [], 'settings without a model');
+  fs.writeFileSync(path.join(root, 'config.yaml'), 'model:\n  provider: custom\n');
+  assert.deepEqual(run('acp'), ['-I /opt/woowtechbot-podman/hermes/gateway.py']);
+  for (const other of [['--version'], ['acp', '--help'], ['auth', 'list'], ['gateway', 'run']]) assert.deepEqual(run(...other), [], other.join(' '));
+});

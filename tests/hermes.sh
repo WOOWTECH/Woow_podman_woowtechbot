@@ -31,6 +31,7 @@ for ((i = 0; i < 120; i++)); do
 done
 ((i < 120)) || ql_die "the bot in the test container did not become healthy"
 podman exec -i -u maus -e HOME=/data -w /data "$name" node --input-type=module <"$REPO/tests/hermes-smoke.mjs"
+podman exec -i -u maus -e HOME=/data -w /data "$name" node --input-type=module <"$REPO/tests/hermes-gateway.mjs"
 podman exec "$name" sh -c 'printf "memory peak %s MiB, processes peak %s\n" "$(($(cat /sys/fs/cgroup/memory.peak) / 1048576))" "$(cat /sys/fs/cgroup/pids.peak)"' || true
 podman inspect --format 'state={{.State.Status}} oom={{.State.OOMKilled}}' "$name"
 ql_info "Hermes checks passed"

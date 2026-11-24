@@ -147,3 +147,22 @@ test('--check exits 78 with the setting names, before anything is written', () =
     { env: { ...env, WTB_LLM_GW_MAX_TOKENS: '32000' }, encoding: 'utf8' });
   assert.equal(good.status, 0, good.stderr);
 });
+
+test('the Hermes gateway is found by its command line and ended', async () => {
+  const proc = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-proc-'));
+  const add = (pid, ...args) => { fs.mkdirSync(path.join(proc, pid)); fs.writeFileSync(path.join(proc, pid, 'cmdline'), args.join('\0') + '\0'); };
+  add('7', '/opt/hermes/.venv/bin/python', '-m', 'hermes_cli.main', '--profile', 'default', 'gateway', 'run', '--quiet', '--idle-exit');
+  add('8', '/opt/hermes/.venv/bin/python', '/opt/hermes/.venv/bin/hermes', 'acp');
+  add('9', 'node', '-e', 'gateway run hermes_cli.main');
+  fs.mkdirSync(path.join(proc, '10'));
+  fs.mkdirSync(path.join(proc, 'self'));
+  assert.deepEqual(entry.hermesGateways(proc), [7]);
+
+  const sent = [];
+  let left = [7];
+  await entry.stopHermes({ list: () => left, kill: (pid, signal) => { sent.push([pid, signal]); setTimeout(() => { left = []; }, 150); }, seconds: 5 });
+  assert.deepEqual(sent, [[7, 'SIGTERM']]);
+  const started = Date.now();
+  await entry.stopHermes({ list: () => [7], kill: () => { throw new Error('ESRCH'); }, seconds: 0.3 });
+  assert.ok(Date.now() - started < 3000, 'a gateway that does not end is not waited for forever');
+});

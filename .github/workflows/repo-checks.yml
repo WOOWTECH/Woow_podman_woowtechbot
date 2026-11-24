@@ -25,7 +25,7 @@ jobs:
       - name: Entry point, pairing command, Cockpit page and Hermes tests
         run: node --test tests/*.test.cjs
       - name: Syntax of the Cockpit page and the lab tools
-        run: for f in cockpit/page/bot.js tests/cockpit-lab/fake-app.cjs tests/cockpit-page.cjs tests/hermes-smoke.mjs image/hermes/patch-app.mjs; do node --check "$f"; done
+        run: for f in cockpit/page/bot.js tests/cockpit-lab/fake-app.cjs tests/cockpit-page.cjs tests/hermes-smoke.mjs tests/hermes-gateway.mjs image/hermes/patch-app.mjs; do node --check "$f"; done
       - name: Cockpit page helper (fake podman, the real pair.cjs, a stand-in app)
         run: python3 tests/test_cockpit_helper.py -v
 

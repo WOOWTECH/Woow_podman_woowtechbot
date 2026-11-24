@@ -16,7 +16,7 @@ Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:
 ## 需求
 
 - x86_64 主機（映像只有 amd64）、rootless Podman 4.9 以上（Ubuntu 24.04）、systemd user 與 linger。
-- 映像約 8.4 GiB，建置時另外需要官方 Hermes 映像約 3 GiB；資料建議至少留 20 GB；容器預設上限 4 GiB 記憶體、2 核。
+- 映像約 8.6 GiB，建置時另外需要官方 Hermes 映像約 3 GiB；資料建議至少留 20 GB；容器預設上限 4 GiB 記憶體、2 核。
 - GHCR 讀取權限：先 `podman login ghcr.io`（read:packages 權杖），或安裝時加 `--gh-auth` 使用 gh CLI 的登入。
 
 ## 安裝
@@ -116,7 +116,7 @@ scripts/hermes.sh status
 設好之後，在 App 建立或編輯 bot，引擎選 Hermes。bot 的工具照常可用：讀附件、附檔、發布網站、請其他 bot 幫忙。Hermes 用 `tool_search` 找到這些工具，不會全部列出來。
 
 - **Hermes 不會借用 Claude 和 Codex 引擎的登入。** 上游預設會把那些登入的模型也列出來，選了就會接管並改寫登入檔，可能害原本的引擎被登出。映像用管理員設定檔 `/etc/hermes/config.yaml` 關掉它，使用者和 bot 都改不了。要用 Claude 訂閱請選 Claude 引擎。
-- 第一次回覆比較慢，要先啟動 Hermes 的背景程式；閒置 10 分鐘後它會自己結束。
+- 第一次回覆比較慢，要先啟動 Hermes 的背景程式；閒置 10 分鐘後它會自己結束。所有 Hermes 對話共用這個程式，映像讓它獨立啟動：App 關掉一個閒置的對話，不會中斷其他 bot 正在進行的對話。
 - 記憶體：第一個 Hermes 對話約 0.8 GB，之後每個約 0.4 GB。同時用幾個 Hermes 對話時，`WOOW_WTB_MEMORY` 至少留 4g。
 - 有些模型不接受 ChatGPT 帳號，錯誤會顯示在對話裡。
 - Hermes 用 ChatGPT 帳號時，用的是那個帳號的 Codex 額度。用完時對話會寫 `quota exhausted (429)` 和多久以後恢復；恢復前指定別的模型會出現 `model_resolution_failed`，也是同一個原因。

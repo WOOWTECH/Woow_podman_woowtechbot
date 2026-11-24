@@ -221,6 +221,22 @@ function selfTest(addonDir = ADDON) {
   }
 }
 
+// The gateway that all Hermes conversations share is a process of its own (image/hermes/gateway.py),
+// which the add-on does not know. It is ended after the add-on, so that it can close properly.
+function hermesGateways(proc = '/proc') {
+  return fs.readdirSync(proc).filter(pid => /^\d+$/.test(pid)).filter(pid => {
+    try {
+      const args = fs.readFileSync(path.join(proc, pid, 'cmdline'), 'utf8').split('\0');
+      return ['hermes_cli.main', 'gateway', 'run'].every(arg => args.includes(arg));
+    } catch { return false; }
+  }).map(Number);
+}
+async function stopHermes({ list = hermesGateways, kill = process.kill, seconds = 8 } = {}) {
+  for (const pid of list()) { try { kill(pid, 'SIGTERM'); } catch { /* gone already */ } }
+  const end = Date.now() + seconds * 1000;
+  while (list().length && Date.now() < end) await new Promise(resolve => setTimeout(resolve, 100));
+}
+
 function main(argv = process.argv.slice(2), env = process.env) {
   const mode = argv[0] || 'run';
   if (mode === '--self-test') { selfTest(); console.log('entry: self-test passed'); return; }
@@ -250,13 +266,14 @@ function main(argv = process.argv.slice(2), env = process.env) {
     process.on(signal, () => { if (child.exitCode === null) child.kill(signal); });
   }
   child.on('error', error => { console.error(`woowtechbot: cannot start the add-on: ${error.message}`); process.exit(1); });
-  child.on('exit', (code, signal) => {
+  child.on('exit', async (code, signal) => {
+    await stopHermes();
     process.exit(code ?? (signal ? 128 + (os.constants.signals[signal] || 0) : 1));
   });
 }
 
 module.exports = {
-  EX_CONFIG, SECRET_OPTIONS, ConfigError, addonEnvironment, assertTmpfs, buildOptions, readSecret,
-  selfTest, serverName, turnsMaxRunning, validateWithAddon, writeOptions,
+  EX_CONFIG, SECRET_OPTIONS, ConfigError, addonEnvironment, assertTmpfs, buildOptions, hermesGateways, readSecret,
+  selfTest, serverName, stopHermes, turnsMaxRunning, validateWithAddon, writeOptions,
 };
 if (require.main === module) main();

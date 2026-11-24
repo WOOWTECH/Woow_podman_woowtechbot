@@ -189,6 +189,13 @@ try {
   spawnSync('hermes', ['config', 'set', 'auth.adopt_external_logins', 'true'], { timeout: 60000 });
   assert.equal(hermes('config', 'get', 'auth.adopt_external_logins').toLowerCase(), 'false', 'a user could turn it on');
 
+  stage = 'the shared gateway is a process of its own';
+  const gateway = fs.readdirSync('/proc').filter(pid => /^\d+$/.test(pid)).find(pid => {
+    try { const args = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0'); return args.includes('hermes_cli.main') && args.includes('gateway'); } catch { return false; }
+  });
+  assert.ok(gateway, 'no gateway is running');
+  assert.match(fs.readFileSync(`/proc/${gateway}/status`, 'utf8'), /^PPid:\t1$/m);
+
   console.log(JSON.stringify({ ok: true, version: 'v0.22.5', modelsBeforeSetUp: 0, modelsAfterSetUp: now.models.length,
     turns: 3, claudeSignInTouched: false, botTools: catalog.filter(name => name.startsWith('mcp__')).length, attached, realModel: false, seconds }));
 } catch (error) {
