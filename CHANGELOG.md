@@ -16,7 +16,9 @@ the revision of this repo's packaging on it.
   site's isolation); `--pairing` also signs in once with a one-time code over the public address.
 - `WTB_SERVER_NAME`: the label of this server in the apps, as `bot.serverName` on PaaS. Without it the
   label is the container's host name, `woowtechbot`, the same as a PaaS service's default.
-- `install.sh --dry-run --set` no longer reports a setting as set.
+- `install.sh --dry-run --set` no longer reports a setting as set. Its settings check now sees the `--set`
+  values. README: put the sign-in relay token in first, then set the relay URL (the other way round is
+  refused half-way); who may sign in with an emailed code.
 - `tests/ha-suites.sh`: runs the HA add-on's own suites from a checkout of the matching release
   (tools, published apps in both modes before and after a restart, the email sign-in flow against a
   mail stand-in). `tests/public.sh`: check-public.sh against a TLS stand-in for the tunnel, and

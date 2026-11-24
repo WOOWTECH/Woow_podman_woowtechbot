@@ -84,6 +84,10 @@ wtb_check_settings() {
   for s in "${WTB_SECRETS[@]}"; do
     if podman secret exists "$s"; then args+=(--secret "$s,type=mount,uid=0,gid=0,mode=0400"); fi
   done
+  # A dry run does not write the --set values to the env file; the check must see them all the same.
+  if ((dry)); then
+    for s in "${sets[@]}"; do args+=(-e "$s"); done
+  fi
   podman run "${args[@]}" "$WTB_IMAGE" node /opt/woowtechbot-podman/entry.cjs --check >/dev/null \
     || ql_die "the settings were refused (see the lines above); nothing was installed"
 }
