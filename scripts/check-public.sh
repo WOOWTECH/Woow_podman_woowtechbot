@@ -51,7 +51,14 @@ if [[ $(header location) == *cloudflareaccess.com* ]]; then bad "the bot address
 expect "the bot address answers over valid TLS" 200
 fetch "$bot/"
 expect "the app page loads" 200
-if grep -qE 'cdn-cgi/challenge-platform' "$tmp/b"; then bad "Cloudflare injects a script into the app page"; else ok "the app page is delivered unchanged"; fi
+# Cloudflare's JavaScript Detections is a zone setting: it adds its own script to HTML that does not
+# say no-transform, so the app page has it on HA and PaaS addresses too. Published pages send
+# no-transform and must not have it.
+if grep -qE 'cdn-cgi/challenge-platform' "$tmp/b"; then
+  printf 'note Cloudflare adds its own script to the app page (a zone setting, the same on HA and PaaS)\n'
+else
+  ok "the app page is delivered unchanged"
+fi
 fetch "$bot/api/auth/session"
 expect "a visitor without a session is refused" '401|403'
 no_store "the session route"
