@@ -1,7 +1,8 @@
-The woowtech bot icons of the web app. The HA add-on image still ships the MausBot ones; the PaaS
-edition replaced them, and the Containerfile copies these files over them in /app/dist.
-image/rootfs/opt/woowtechbot-podman/brand.cjs checks their sha256 and points index.html and the web
-manifest at them.
+Reference copies of the woowtech bot icons of the web app. They are not copied into the image: the HA
+add-on image has them since 0.1.7-rc.19, where HA took over the PaaS edition's rebrand. These copies are
+what the checks compare with: image/rootfs/opt/woowtechbot-podman/brand.cjs holds their sha256 (the
+build stops when the base's icons differ) and tests/smoke.sh and scripts/check-public.sh compare the
+files the bot serves with them.
 
 They are byte for byte the files the PaaS edition serves (https://openmausbot.woowtech.io/<file>,
 from paas-odoo-ci woowtechbot/assets), copied on 2026-11-25:
@@ -14,5 +15,5 @@ from paas-odoo-ci woowtechbot/assets), copied on 2026-11-25:
 | apple-touch-icon.png | 2722 | 217fe540639eabae893ba14d284d913f2bd31b76a545d1d1612ef56ef3f8e1ac |
 
 Tile: woowtech blue #6183FC. Robot glyph: Material Design Icons "robot-happy" (@mdi/svg 7.4.47,
-Pictogrammers, Apache License 2.0). When PaaS changes its icons, copy the new files here and update
-the sha256 values in brand.cjs.
+Pictogrammers, Apache License 2.0). When PaaS changes its icons, copy the new files here and update the
+sha256 values in brand.cjs.

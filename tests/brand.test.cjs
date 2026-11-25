@@ -1,6 +1,7 @@
 'use strict';
-// node --test tests/: brand.cjs on a copy of the base image's index.html and web manifest
-// (tests/fixtures/brand, from ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14) with the icons of image/brand.
+// node --test tests/: brand.cjs on a copy of the base image's index.html and web manifest with the icons of
+// image/brand: tests/fixtures/brand is from ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14 (MausBot title),
+// tests/fixtures/brand/rc20 from 0.1.7-rc.20 (the base this edition runs: already woowtechbot).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
@@ -16,10 +17,10 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-brand-'));
 test.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
 let n = 0;
-function dist() {
+function dist(from = fixtures) {
   const dir = path.join(tmp, String(n++));
   fs.mkdirSync(dir);
-  for (const file of ['index.html', 'manifest.webmanifest']) fs.copyFileSync(path.join(fixtures, file), path.join(dir, file));
+  for (const file of ['index.html', 'manifest.webmanifest']) fs.copyFileSync(path.join(from, file), path.join(dir, file));
   for (const file of Object.keys(ICONS)) fs.copyFileSync(path.join(icons, file), path.join(dir, file));
   return dir;
 }
@@ -32,7 +33,22 @@ test('the icons in image/brand are the pinned ones', () => {
   assert.doesNotMatch(r.stderr, /is not the woowtech bot icon|is missing/);
 });
 
-test('applies to the base files: iPhone name and versioned icon addresses, nothing else', () => {
+test('the 0.1.7-rc.20 base already has the name: only the icon addresses change', () => {
+  const rc20 = path.join(fixtures, 'rc20');
+  const dir = dist(rc20);
+  const r = run(dir);
+  assert.equal(r.status, 0, r.stderr);
+  const html = read(dir, 'index.html'), base = read(rc20, 'index.html');
+  assert.match(html, /<meta name="apple-mobile-web-app-title" content="woowtechbot" \/>/);
+  assert.equal(changed(html, base).length, 2, 'the two icon links');
+  assert.ok(html.includes(`href="./app-icon.svg?v=${VERSION}"`));
+  assert.ok(html.includes(`href="./apple-touch-icon.png?v=${VERSION}"`));
+  assert.equal(changed(read(dir, 'manifest.webmanifest'), read(rc20, 'manifest.webmanifest')).length, 2);
+  assert.equal(run('--check', dir).status, 0);
+  assert.match(run(dir).stdout, /already in place/);
+});
+
+test('applies to the rc.14 base files: iPhone name and versioned icon addresses, nothing else', () => {
   const dir = dist();
   const r = run(dir);
   assert.equal(r.status, 0, r.stderr);

@@ -6,12 +6,12 @@ woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://gith
 
 ## 它怎麼運作
 
-Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
+Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.20`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
 
 1. 讀 `~/.config/woowtechbot/woowtechbot.env` 的 `WTB_*` 設定，以及選用的 podman secret；
 2. 照 HA 外掛 `config.yaml` 的規則檢查，再用外掛自己的檢查程式檢查；有錯就停下，並指出是哪個設定（結束碼 78）；
 3. 把設定寫到容器內的私有 tmpfs，`/data/options.json` 只是連結，所以帳密不會留在資料磁碟或它的備份裡；
-4. 執行 HA 外掛原本的程式，程式不做任何修改。只有網頁的圖示換成和 PaaS 相同的 woowtech bot 圖示（見「圖示」）。
+4. 執行 HA 外掛原本的程式，程式不做任何修改。建置映像時只多做一件事：檢查網頁用的是 PaaS 相同的 woowtech bot 圖示，並在圖示網址後加版本標記（見「圖示」）。
 
 ## 需求
 
@@ -159,7 +159,9 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 
 ## 圖示
 
-網頁版用 woowtech bot 圖示（藍底機器人），和 PaaS 相同：瀏覽器分頁、「關於」視窗、設定頁，以及加到手機主畫面後的圖示和打開畫面。HA 外掛的映像裡還是 MausBot 圖示，所以建置時會換掉。圖示檔在 `image/brand`，和 PaaS 的檔案逐位元相同。
+網頁版用 woowtech bot 圖示（藍底機器人），和 PaaS 相同：瀏覽器分頁、「關於」視窗、設定頁，以及加到手機主畫面後的圖示和打開畫面。產品名稱也是 woowtechbot，新安裝的幕僚長就叫 woowtechbot。這是 HA 外掛映像從 0.1.7-rc.19 起的樣子，它採用了 PaaS 的整套品牌修改（rc.14 還是 MausBot 的圖示和名稱）。建置時會檢查圖示和 PaaS 的檔案逐位元相同，不同就停下；檔案副本在 `image/brand`。圖示網址會加上 `?v=<雜湊>`，Cloudflare 和瀏覽器不會再拿出舊圖。
+
+已經建好的幕僚長，名字存在資料裡，換版本不會改：在 App 裡改名，或用 owner API（容器內 `PATCH /api/bots/<id>`，內容 `{"name":"woowtechbot"}`）。
 
 手機上的 MausBot App 是上游在應用程式商店發佈的，圖示和打開畫面是 App 自帶的，這裡改不了。想在手機上也看到 woowtech bot 圖示，可以改用網頁版，和 PaaS 的建議相同：
 
@@ -183,6 +185,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
 - 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
 - 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
+- 上游 MausBot 的廣告（團隊方案、ModelGo、Boat 優惠等）和「公告」頁已拿掉，這是 PaaS 的修補 0016，HA 映像從 0.1.7-rc.20 起帶著。畫面上還有約一百處「MausBot」字樣，講的是手機 App、MausBot Cloud 和帳號等上游的東西，和 PaaS 一樣刻意保留。
 - 官方 App 2.0.0 從檔案選擇器選 CSV 會被拒，可以改成 .txt 或壓成 ZIP（上游 #7084）。配對連結沒有確認畫面。
 - 發布的網站請用 `.js` 當 JavaScript module 的副檔名：`.mjs` 會被當成一般下載檔送出，瀏覽器不會執行（HA、PaaS 相同）。
 - Codex 的工具範圍一定要保留 `native:*`。
@@ -205,7 +208,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 | 對外網址 | CF Web GUI＋Security Access | 平台自動建立 | 主機上的 Cloudflare Tunnel＋Security Access |
 | 資源 | 共用主機，不設上限 | 4 CPU／8 GiB，5 個對話 | 預設 2 核／4 GiB，3 個對話 |
 | 備份 | HA 冷備份 | 刪除後保留 7 天 | 套件備份與還原（後續階段） |
-| 網頁圖示 | MausBot（rc.14 映像） | woowtech bot | woowtech bot，和 PaaS 相同的檔案 |
+| 網頁圖示與名稱 | woowtech bot（rc.19 起） | woowtech bot | woowtech bot（來自 HA 映像） |
 
 ## 授權
 

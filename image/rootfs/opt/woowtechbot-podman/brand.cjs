@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 'use strict';
-// brand.cjs: the woowtech bot icons in the web app of the HA add-on image, as in the PaaS edition. The
-// Containerfile copies the icon files (image/brand) over the MausBot ones in /app/dist. This script checks
-// them and edits the two files that point at them:
-//   - index.html: the home screen name on iPhones (apple-mobile-web-app-title) is woowtechbot, not OpenMausBot;
+// brand.cjs: the woowtech bot icons in the web app, as in the PaaS edition. The HA add-on image has them
+// since 0.1.7-rc.19 (0.1.7-rc.14 still shipped the MausBot ones). This script runs while the image is built:
+//   - it checks that /app/dist/ carries the four woowtech bot icons, so a base that goes back to MausBot
+//     icons stops the build instead of reaching the host;
+//   - index.html: the home screen name on iPhones (apple-mobile-web-app-title) is woowtechbot;
 //   - index.html and manifest.webmanifest: the icon addresses get ?v=<hash of the icons>, so Cloudflare and
-//     browsers fetch the new icons instead of a MausBot one they keep in their cache.
+//     browsers do not answer with a MausBot icon they still keep in their cache (the edge keeps png and svg
+//     files for hours).
 // The app's own code asks for /app-icon.svg without ?v= (About dialog, settings): it gets the new file once
 // those caches run out, within a few hours.
 //   brand.cjs <dist>          apply; fails when the files are not as expected (a new base changed them)

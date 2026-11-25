@@ -3,6 +3,22 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.20-1 (unreleased)
+
+- The base is now the HA add-on image 0.1.7-rc.20 (pinned by digest), up from rc.14. rc.19 took over the
+  PaaS edition's rebrand: the woowtech bot icons, the name woowtechbot in page titles, the web manifest
+  and the texts, and for a new install a chief of staff called woowtechbot instead of MausBot. rc.20 adds
+  the PaaS patch 0016: a production build shows none of upstream's promotions (team plan, Grok Bot, MausBot
+  Cloud, Product Hunt, Boat and ModelGo offers, GitHub star, the update question, remote announcement cards)
+  and no Announcements page or menu entry. The upstream source (0.1.169), the add-on code and the options
+  are the same as in rc.14. rc.15 to rc.17 (a built-in Hermes engine, since withdrawn) are not used.
+- The icon files are no longer copied into the image: `brand.cjs` checks that the base has them (the
+  build stops when it does not) and still gives the icon addresses `?v=<hash>`. `image/brand` keeps
+  reference copies for the checks.
+- README: how to rename a chief of staff that was already created (its name is stored in the data).
+- Left as in PaaS: about a hundred texts that name MausBot on purpose (the phone app, MausBot Cloud,
+  accounts, links to upstream), and the phone app's own icon and opening screen.
+
 ## 0.1.7-rc.14-5 (unreleased)
 
 - The web app has the woowtech bot icons of the PaaS edition instead of the MausBot ones of the HA
