@@ -3,6 +3,20 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.14-5 (unreleased)
+
+- The web app has the woowtech bot icons of the PaaS edition instead of the MausBot ones of the HA
+  image: the browser tab, the About dialog, the settings, and the icon and opening screen of the app
+  added to a phone's home screen. `image/brand` holds the four files, byte for byte the ones PaaS
+  serves. `brand.cjs` checks them at build time, gives iPhone home screens the name woowtechbot and
+  asks for the icons with `?v=<hash>`, so Cloudflare and browsers do not keep showing a cached MausBot
+  icon. The build stops when a new base changes the lines it edits.
+- README: the phone App (MausBot, from the app stores) keeps its own icon and opening screen, which
+  cannot be changed here; how to put the web app on a phone's home screen instead, as PaaS advises.
+- Tests: `tests/brand.test.cjs`. `tests/smoke.sh` and `scripts/check-public.sh` check that the icons
+  arrive, the latter through Cloudflare.
+- 0.1.7-rc.14-4 was a test build that was withdrawn; the number is not used again.
+
 ## 0.1.7-rc.14-3 (unreleased)
 
 - Cockpit page (`cockpit/`, `sudo scripts/cockpit-page.sh install`): the HA add-on's administrator

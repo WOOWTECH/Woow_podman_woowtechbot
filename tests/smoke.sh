@@ -73,6 +73,18 @@ check "document_read tools are present (pdftotext, openpyxl, prlimit)" in_box sh
   'test -x /opt/woowtechbot/conda/bin/pdftotext && /opt/woowtechbot/conda/bin/python3 -I -c "import openpyxl" && test -x /usr/bin/prlimit'
 check "the browser is present" in_box sh -c 'test -x "$AGENT_BROWSER_EXECUTABLE_PATH"'
 check "GET /api/health is 200 on the entrance" test "$(status "$base/api/health")" = 200
+check "the web app has the woowtech bot icons, not the MausBot ones" in_box node /opt/woowtechbot-podman/brand.cjs --check /app/dist
+page=$(curl -s --max-time 10 "$base/")
+v=$(sed -n 's/.*app-icon\.svg?v=\([0-9a-f]*\)".*/\1/p' <<<"$page" | head -1)
+icons=0
+for f in app-icon.svg app-icon-192.png app-icon-512.png apple-touch-icon.png; do
+  if [[ -n $v ]] && cmp -s <(curl -s --max-time 10 "$base/$f?v=$v") "$REPO/image/brand/$f"; then icons=$((icons + 1)); fi
+done
+if ((icons == 4)) && grep -q 'apple-mobile-web-app-title" content="woowtechbot"' <<<"$page"; then
+  ok "the entrance serves the woowtech bot icons (v=$v)"
+else
+  bad "the entrance serves $icons of the 4 woowtech bot icons (v=${v:-none})"
+fi
 headers=$(curl -s -D - -o /dev/null --max-time 10 "$base/api/auth/session" | tr -d '\r')
 code=$(sed -n '1s/^HTTP\/[0-9.]* \([0-9]*\).*/\1/p' <<<"$headers")
 if [[ $code == 401 || $code == 403 ]]; then ok "an unpaired session is refused ($code)"; else bad "an unpaired session answered $code"; fi

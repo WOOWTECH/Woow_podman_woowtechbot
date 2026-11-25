@@ -11,7 +11,7 @@ Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:
 1. 讀 `~/.config/woowtechbot/woowtechbot.env` 的 `WTB_*` 設定，以及選用的 podman secret；
 2. 照 HA 外掛 `config.yaml` 的規則檢查，再用外掛自己的檢查程式檢查；有錯就停下，並指出是哪個設定（結束碼 78）；
 3. 把設定寫到容器內的私有 tmpfs，`/data/options.json` 只是連結，所以帳密不會留在資料磁碟或它的備份裡；
-4. 執行 HA 外掛原本的程式，程式不做任何修改。
+4. 執行 HA 外掛原本的程式，程式不做任何修改。只有網頁的圖示換成和 PaaS 相同的 woowtech bot 圖示（見「圖示」）。
 
 ## 需求
 
@@ -157,6 +157,19 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 
 驗收：收件匣收到 8 碼驗證碼並成功登入一次；同一碼再用會被拒（401）。通過後才由管理員關掉測試模式。憑證最長 365 天，到期前要換發。
 
+## 圖示
+
+網頁版用 woowtech bot 圖示（藍底機器人），和 PaaS 相同：瀏覽器分頁、「關於」視窗、設定頁，以及加到手機主畫面後的圖示和打開畫面。HA 外掛的映像裡還是 MausBot 圖示，所以建置時會換掉。圖示檔在 `image/brand`，和 PaaS 的檔案逐位元相同。
+
+手機上的 MausBot App 是上游在應用程式商店發佈的，圖示和打開畫面是 App 自帶的，這裡改不了。想在手機上也看到 woowtech bot 圖示，可以改用網頁版，和 PaaS 的建議相同：
+
+1. 手機用 Chrome 打開 bot 的網址，例如 `https://woowtechbot-openclaw.woowtech.io`。
+2. 登入：管理員用 Cockpit 管理頁產生的瀏覽器配對碼；或用允許的信箱收驗證碼（見「Email 驗證碼登入」）。
+3. 按右上角 ⋮，選「加到主畫面」。iPhone 用 Safari 的分享按鈕，選「加入主畫面」。
+4. 之後從主畫面的 woowtechbot 圖示打開。
+
+網頁版沒有手機通知，也不能讓 bot 操作手機，這兩件事要用 App。以前就加到主畫面的，圖示可能要過一陣子才會更新；想馬上換，就從主畫面移除再加一次。
+
 ## 更新與移除
 
 - 更新：拉新版本的 repo 後執行 `scripts/install.sh`。舊版的本機映像會保留，方便退回。
@@ -169,6 +182,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
 - 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
+- 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
 - 官方 App 2.0.0 從檔案選擇器選 CSV 會被拒，可以改成 .txt 或壓成 ZIP（上游 #7084）。配對連結沒有確認畫面。
 - 發布的網站請用 `.js` 當 JavaScript module 的副檔名：`.mjs` 會被當成一般下載檔送出，瀏覽器不會執行（HA、PaaS 相同）。
 - Codex 的工具範圍一定要保留 `native:*`。
@@ -177,7 +191,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 ## 測試
 
 - `node --test tests/*.test.cjs`、`tests/dryrun.local.sh`：不需要映像，CI 每次都跑。
-- `tests/smoke.sh`：安裝後在主機上跑，檢查服務、開放的埠、設定與密鑰的權限、資源上限、配對碼只能用一次、配對碼不進日誌。會產生並用掉一組配對碼，最後清乾淨。
+- `tests/smoke.sh`：安裝後在主機上跑，檢查服務、開放的埠、設定與密鑰的權限、資源上限、網頁圖示、配對碼只能用一次、配對碼不進日誌。會產生並用掉一組配對碼，最後清乾淨。
 - `tests/ha-suites.sh <HA 外掛的 checkout>`：拿同一版 HA 外掛自己的測試來跑 Podman 映像（工具、發布網站兩種模式、Email 登入），不另外抄一份。
 - `tests/public.sh`：用本機的 TLS 替身試跑 `check-public.sh`，也確認它會擋下接錯的設定。
 - `tests/runtime.sh`：用一個用完即丟、沒有網路的容器，跑 HA 外掛的執行期檢查（Odoo MCP 唯讀閘道、未配對與假冒 HA 入口的請求被拒、引擎版本），不影響已安裝的 bot。
@@ -187,10 +201,11 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 | | HA 外掛 | PaaS | Podman（本 repo） |
 |---|---|---|---|
 | 執行位置 | Home Assistant 主機 | WOOW PaaS 工作區 | 自己的 Linux 主機 |
-| 管理入口 | HA 側邊欄 | PaaS 服務設定頁 | 主機指令；Cockpit 管理頁規劃中 |
+| 管理入口 | HA 側邊欄 | PaaS 服務設定頁 | 主機指令、Cockpit 管理頁 |
 | 對外網址 | CF Web GUI＋Security Access | 平台自動建立 | 主機上的 Cloudflare Tunnel＋Security Access |
 | 資源 | 共用主機，不設上限 | 4 CPU／8 GiB，5 個對話 | 預設 2 核／4 GiB，3 個對話 |
 | 備份 | HA 冷備份 | 刪除後保留 7 天 | 套件備份與還原（後續階段） |
+| 網頁圖示 | MausBot（rc.14 映像） | woowtech bot | woowtech bot，和 PaaS 相同的檔案 |
 
 ## 授權
 

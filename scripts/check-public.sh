@@ -59,6 +59,16 @@ if grep -qE 'cdn-cgi/challenge-platform' "$tmp/b"; then
 else
   ok "the app page is delivered unchanged"
 fi
+# The page asks for the icons with ?v=<hash of the icons>, so Cloudflare cannot answer with a MausBot
+# icon it still has in its cache. They must be the woowtech bot ones of image/brand.
+v=$(sed -n 's/.*app-icon\.svg?v=\([0-9a-f]*\)".*/\1/p' "$tmp/b" | head -1)
+icons=0
+for f in app-icon.svg app-icon-192.png app-icon-512.png apple-touch-icon.png; do
+  [[ -n $v ]] || break
+  fetch "$bot/$f?v=$v"
+  if [[ $code == 200 ]] && cmp -s "$tmp/b" "$REPO/image/brand/$f"; then icons=$((icons + 1)); fi
+done
+if ((icons == 4)); then ok "the woowtech bot icons arrive (v=$v)"; else bad "$icons of the 4 woowtech bot icons arrive (v=${v:-none})"; fi
 fetch "$bot/api/auth/session"
 expect "a visitor without a session is refused" '401|403'
 no_store "the session route"
