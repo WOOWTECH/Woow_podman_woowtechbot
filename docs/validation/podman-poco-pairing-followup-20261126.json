@@ -1,0 +1,74 @@
+{
+  "schema": "woowtech.podman.poco-pairing-followup.v1",
+  "observedAtUtc": "2026-11-26T12:46:13Z",
+  "production": {
+    "release": "0.1.7-rc.22-2",
+    "imageId": "sha256:473ae67af704d6fecba22f9bb4cb5dcf5ba08ec256b8694913bc621551aac746",
+    "origin": "https://woowtechbot-openclaw.woowtech.io",
+    "environmentId": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+    "containerStatus": "running healthy",
+    "restartCount": 0
+  },
+  "androidApp": {
+    "package": "io.woowtech.agent",
+    "build": 3820,
+    "profile": "android-qa-podman",
+    "operatorReportedPairingFormReady": true,
+    "operatorReportedCodeSubmittedWithoutRecordingPlaintext": true,
+    "qaBotVisibleInWebView": "not yet confirmed",
+    "operatorControlsDeviceExclusively": true
+  },
+  "qaTarget": {
+    "botId": "5f51f80d-afdb-4e44-b310-fc0798170a66",
+    "botName": "Podman 實測 516b0108",
+    "mainThreadId": "7cb1b6b6-8ee0-4af2-8d83-787369ff75d6",
+    "notificationsEnabledOnBot": true,
+    "questionCardFixture": "not created",
+    "attachmentFixture": "not created"
+  },
+  "pairing": {
+    "id": "4c11957c-8055-4a7c-b4f1-982552238e0f",
+    "requestedTtlMs": 300000,
+    "expiresAtUtc": "2026-11-26T12:48:11.493Z",
+    "scopes": ["client"],
+    "rsaSpkiSha256": "157b5482ff06274d0b851795966f08f360487b2ee66c6984bdf7c318a29fd150",
+    "cipher": "RSA-OAEP-SHA256/MGF1-SHA256",
+    "plainCodeShared": false,
+    "encryptedCodeDeliveredToAndroidSession": "ff9ee02365d04f45b296077c894a7a40",
+    "encryptedCodeMessageHttp": 202,
+    "pendingAfterRedemption": 0,
+    "sessionCountBefore": 3,
+    "sessionCountAfter": 4,
+    "newSession": {
+      "id": "e7a016cf-55ab-41a3-8b63-e4ff6cad6127",
+      "label": "Chrome on Android",
+      "scopes": ["client"],
+      "createdAtUtc": "2026-11-26T12:44:59.798Z"
+    },
+    "originalThreeSessionsPreserved": true,
+    "backendResult": "passed",
+    "nativeWebViewResult": "awaiting operator confirmation"
+  },
+  "notificationBoundary": {
+    "earlierClaimCorrected": "The upstream MausBot Android app's keep-connected local bot_messages notification path is not established in io.woowtech.agent build 3820.",
+    "androidOperatorSourceFinding": "Build 3820 uses an isolated WebView and FCM wiring; no keep-connected switch, bot SSE/WebSocket background service or bot_messages channel was found.",
+    "podmanNativeNotificationTap": "not tested",
+    "podmanOfflineFcm": "not deployed or tested"
+  },
+  "emailRetest": {
+    "atUtc": "2026-11-26T12:44:02.689Z",
+    "method": "real Chromium on public sign-in page with temporary test-recipient access",
+    "startApiHttp": 502,
+    "upstreamRelayHttpFromContainerLog": 403,
+    "codeEntryShown": false,
+    "mailboxDelivery": "not confirmed",
+    "temporaryRecipientAccessRemoved": true,
+    "result": "blocked by upstream relay"
+  },
+  "cockpit": {
+    "localHttpsLoginPageHttp": 200,
+    "unauthenticatedBotPageHttp": 401,
+    "authenticatedPageClick": "not tested; no administrator browser session available"
+  },
+  "priority": "Per latest user instruction, Podman work stops after pairing wrap-up while HA real FCM acceptance is prioritized. No question card, model turn or notification event was created in this round."
+}

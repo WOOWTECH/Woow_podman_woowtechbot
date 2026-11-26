@@ -16,16 +16,17 @@ CONTAINERS=("woowtechbot:woowtechbot.service" "woowtechbot-tunnel:woowtechbot-tu
 # env keys allowed to carry user-supplied credentials (ERE on the whole key; empty = none):
 # every credential of this app is a podman secret (scripts/secret.sh).
 ENV_CREDENTIAL_ALLOW=''
-# The HA add-on image this edition runs, pinned by its OCI index digest (amd64 only). It is the
-# image of WOOWTECH/Woow_ha_woowtechbot_add_on 0.1.7-rc.22; update both lines together.
-WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.22
-WTB_BASE_IMAGE=ghcr.io/woowtech/amd64-woowtechbot@sha256:10ef3f1fd69f55359dcdfa6d60e3818cd2d4bdab8da684a09b66c5ed47f8d4fc
+# The HA add-on image this edition runs, pinned by its linux/amd64 manifest digest. It is the
+# image of WOOWTECH/Woow_ha_woowtechbot_add_on 0.1.7-rc.23; update both lines together.
+WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.23
+WTB_BASE_IMAGE=ghcr.io/woowtech/amd64-woowtechbot@sha256:141b49b5f31db33e4b5de01b910dcb74ba4cef6deeae388f4da75be203451912
 # the local image: one tag per repo VERSION, so an upgrade keeps the previous image for rollback
 WTB_VERSION=$(cat "$REPO/VERSION")
 WTB_IMAGE=localhost/woowtechbot-podman:$WTB_VERSION
 # The optional credentials (podman secrets) and where the container reads them (root only).
 WTB_SECRETS=(woowtechbot-signin-relay-token woowtechbot-signin-access-client-secret
-  woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url)
+  woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url
+  woowtechbot-android-push-credential)
 # Optional Cloudflare Tunnel connectors (quadlet/optional/<name>.container), each installed only when
 # its token secret <name>-token exists. The bot's container never gets these secrets.
 WTB_TUNNELS=(woowtechbot-tunnel woowtechbot-apps-tunnel)

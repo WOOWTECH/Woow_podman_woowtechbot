@@ -2,13 +2,13 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原、Codex 真模型長回覆、OpenAI 相容閘道的真上游長回覆與大型工具參數，以及原有兩個 Claude bot 的真模型回覆已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；早期 Pixel Tablet 驗過手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線及背景通知。Email 登入信曾在測試模式實收並登入（2026-11-25）；冷備份與還原、Codex 真模型長回覆、OpenAI 相容閘道真上游長回覆與大型工具參數，以及原有兩個 Claude bot 的真模型回覆已驗證（2026-11-26）。目前新版 POCO 的 Podman FCM 實收、正式非測試模式 Email 寄碼驗碼與 Cockpit 管理頁實際點擊仍待驗收。** HA 基底映像目前需要 GHCR 讀取權限；Podman 衍生映像尚未推送 registry。
 
 2026-11-26 的 [HA／Podman 雙邊實測對照](docs/validation/podman-ha-parity-20261126.json) 記錄 Podman 30 輪真模型、公開附件與發布頁、配對碼與 QR 解碼，以及重啟和冷還原後的原 bot 回覆；也逐項標明仍需上游代寄服務、Cockpit 管理員瀏覽器或平板實體操作的驗收。
 
 ## 它怎麼運作
 
-Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.22`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
+Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.23`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
 
 1. 讀 `~/.config/woowtechbot/woowtechbot.env` 的 `WTB_*` 設定，以及選用的 podman secret；
 2. 照 HA 外掛 `config.yaml` 的規則檢查，再用外掛自己的檢查程式檢查；有錯就停下，並指出是哪個設定（結束碼 78）；
@@ -46,6 +46,7 @@ scripts/install.sh --gh-auth  # 看過設定後再執行一次：拉映像、建
 | `WTB_SIGNIN_ACCESS_CLIENT_ID` | `signin_access_client_id` | 選填。代寄網址前若有 Cloudflare Access，填它的 client id；secret 放在密鑰裡 |
 | `WTB_LLM_GW_MAX_TOKENS` | `llm_gw_max_tokens` | OpenAI 相容模型的輸出上限，預設 32000 |
 | `WTB_LLM_GW_ENABLED`、`WTB_LLM_GW_UPSTREAM` | `llm_gw_enabled`、`llm_gw_upstream` | 選配的模型請求閘道（`http://127.0.0.1:8092/v1`） |
+| `WTB_ANDROID_PUSH_ENABLED`、`WTB_ANDROID_PUSH_RELAY_URL` | `android_push_enabled`、`android_push_relay_url` | 離線 Android FCM 通知；預設關閉，啟用時需本安裝專屬的 `android-push-credential` Podman secret 與 HTTPS `/v1/android-push` relay |
 | `WTB_TURNS_MAX_RUNNING` | （HA 為 auto） | 同時執行的對話數，預設 3；PaaS 是 5 |
 
 `WOOW_WTB_*` 是安裝參數：開放的位址與埠（預設 `127.0.0.1:18799`，發布網站用 `18781`），以及記憶體、CPU、程序數的上限。
@@ -60,6 +61,7 @@ scripts/secret.sh set signin-relay-token        # 公司代寄登入信的權杖
 scripts/secret.sh set signin-access-client-secret
 scripts/secret.sh set apporo-odoo-mcp-url        # 選填：Odoo MCP 唯讀
 scripts/secret.sh set woow-prod-odoo-mcp-url
+scripts/secret.sh set android-push-credential  # 僅使用這個 Podman 安裝專屬的 relay credential
 scripts/secret.sh set tunnel-token               # 選填：bot 自己的對外通道（見「對外網址」）
 scripts/install.sh                               # 套用
 ```
@@ -227,7 +229,7 @@ scripts/restore.sh 備份目錄 --identity 私鑰檔 --with-secrets
 - 沒有 HA Supervisor 備份；改用本 repo 的冷備份與還原腳本（見上一節）。
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
-- 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
+- 目前正式站執行本機 Podman 衍生映像 `0.1.7-rc.23-1`，固定 HA rc.23 私人 GHCR amd64 manifest digest，保留原資料與真手機註冊。Podman 衍生映像尚未推送 registry；截至 2026-11-26 15:25 UTC，HA 同版 GitHub tag／Release 尚未建立，也未證實匿名 GHCR 拉取。手機真機 FCM 實收仍待 Android 新版逐站明確 ready；後端註冊與 relay ACK 不能代替收件。詳見 [rc.23-1 部署證據](docs/validation/podman-rc23-digest-deployed-20261126.json)、[先前本機候選驗證](docs/validation/podman-rc23-fcm-candidate-20261126.json)與[先前正式站候選部署](docs/validation/podman-rc23-local-candidate-deployed-20261126.json)。
 - 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
 - 上游 MausBot 的廣告（團隊方案、ModelGo、Boat 優惠等）和「公告」頁已拿掉，這是 PaaS 的修補 0016，HA 映像從 0.1.7-rc.20 起帶著。畫面上還有約一百處「MausBot」字樣，講的是手機 App、MausBot Cloud 和帳號等上游的東西，和 PaaS 一樣刻意保留。
 - HA rc.22 帶入 PaaS 修補 0017：頭像的十種通用輪廓、十種表情和黑白五官可切換；兩種編輯器不再列節慶款式，也不會自動裝扮。舊節慶 body ID 僅在畫面顯示通用機器人，原資料與上傳頭像保留。

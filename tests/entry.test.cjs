@@ -21,7 +21,8 @@ const TOKEN = ['wtbha1', '12345678-1234-1234-1234-123456789abc', 'A'.repeat(43)]
 test('defaults give the HA add-on default options and leave the optional ones out', () => {
   assert.deepEqual(entry.buildOptions({}, noSecrets), {
     public_url: '', ingress_origin: 'http://127.0.0.1', llm_gw_enabled: false, llm_gw_upstream: '',
-    llm_gw_max_tokens: 32000, apporo_odoo_mcp_url: '', woow_prod_odoo_mcp_url: '',
+    llm_gw_max_tokens: 32000, android_push_enabled: false, android_push_relay_url: '',
+    apporo_odoo_mcp_url: '', woow_prod_odoo_mcp_url: '',
   });
 });
 
@@ -64,6 +65,25 @@ test('schema problems are all reported with their setting names', () => {
 
 test('the gateway needs an upstream when it is on', () => {
   assert.throws(() => entry.buildOptions({ WTB_LLM_GW_ENABLED: 'true' }, noSecrets), /WTB_LLM_GW_UPSTREAM/);
+});
+
+test('Android push uses a dedicated secret and the add-on rejects incomplete or unsafe settings', () => {
+  const relay = 'https://assistant-push-test.woowtech.io/v1/android-push';
+  const credential = 'B'.repeat(43);
+  const source = { WTB_ANDROID_PUSH_ENABLED: 'true', WTB_ANDROID_PUSH_RELAY_URL: relay };
+  const options = entry.buildOptions(source, name => name === 'woowtechbot-android-push-credential' ? credential : '');
+  assert.equal(options.android_push_enabled, true);
+  assert.equal(options.android_push_relay_url, relay);
+  assert.equal(options.android_push_credential, credential);
+  entry.validateWithAddon(options, ADDON);
+  assert.throws(() => entry.validateWithAddon(entry.buildOptions(source, noSecrets), ADDON), /woowtechbot-android-push-credential/);
+  assert.throws(() => entry.validateWithAddon({ ...options, android_push_relay_url: 'http://insecure.example/v1/android-push' }, ADDON), /WTB_ANDROID_PUSH_RELAY_URL/);
+  assert.throws(() => entry.validateWithAddon({ ...options, android_push_relay_url: relay + '?key=x' }, ADDON), /WTB_ANDROID_PUSH_RELAY_URL/);
+  assert.throws(() => entry.buildOptions({ WTB_ANDROID_PUSH_ENABLED: 'yes' }, noSecrets), /WTB_ANDROID_PUSH_ENABLED/);
+  const off = entry.buildOptions({}, name => name === 'woowtechbot-android-push-credential' ? credential : '');
+  assert.equal(off.android_push_enabled, false);
+  assert.equal(off.android_push_credential, credential);
+  assert.equal(require('./fixtures/addon/android-push-settings.cjs').androidPushSettings(off).env.WOOWTECH_ANDROID_PUSH_CREDENTIAL, undefined);
 });
 
 test('multi-line values are refused, also in secrets', () => {

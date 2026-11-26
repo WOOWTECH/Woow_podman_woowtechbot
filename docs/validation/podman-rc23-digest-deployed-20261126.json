@@ -1,0 +1,121 @@
+{
+  "schema": "woowtech.podman.rc23-digest-deployment.v1",
+  "recordedAtUtc": "2026-11-26T15:36:19Z",
+  "scope": "Podman rc.23-1 derived image built from the exact authenticated HA rc.23 GHCR manifest and installed on the existing formal instance; no phone or model event sent",
+  "source": {
+    "haImageTag": "ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.23",
+    "haImageRef": "ghcr.io/woowtech/amd64-woowtechbot@sha256:141b49b5f31db33e4b5de01b910dcb74ba4cef6deeae388f4da75be203451912",
+    "haManifestDigest": "sha256:141b49b5f31db33e4b5de01b910dcb74ba4cef6deeae388f4da75be203451912",
+    "haConfigDigestAndImageId": "sha256:cb83a8e7784ee4a1d04407e904a33d75a3bcd9d64f1a043cb97451795543fa31",
+    "haImagePlatform": "linux/amd64",
+    "haManifestKind": "single-architecture Docker schema2 manifest, not an OCI index",
+    "authenticatedGhcrPull": "pass",
+    "haGitHubTagOrReleaseAtCheck": false,
+    "anonymousGhcrPullProven": false,
+    "podmanRepoBasePinUpdated": true,
+    "podmanRepoVersion": "0.1.7-rc.23-1"
+  },
+  "derivedImage": {
+    "ref": "localhost/woowtechbot-podman:0.1.7-rc.23-1",
+    "imageId": "sha256:37164bef2109c2f5db1ff26ebbb092d66c541394d563c3aa5904e648b29a25ee",
+    "localManifestDigest": "sha256:60fc95e44274023ff3d2071a8ffdc68a572e4d90186f144981381dd1f24ce2c6",
+    "baseLabelMatchesPinnedHaDigest": true,
+    "entrySelfTest": "pass",
+    "brandCheck": "pass",
+    "registryPublished": false
+  },
+  "preUpgradeBackup": {
+    "directory": "backup-20261126-153153",
+    "format": "woowtechbot-cold-v1",
+    "version": "0.1.7-rc.23-0",
+    "createdAtUtc": "2026-11-26T15:31:55Z",
+    "sha256sumsFileSha256": "046d56bb4b13d691f01b08de1ce49723a4c39053f04021628c956711545b778d",
+    "checksums": "pass",
+    "restoreVerifyOnlyUsingMatchingPriorWorktree": "pass",
+    "directoryMode": "0700",
+    "containsExistingPhoneRegistration": true,
+    "secretValuesExported": false
+  },
+  "isolatedDataClone": {
+    "network": "none",
+    "ownerHealthStatus": 200,
+    "botCount": 2,
+    "sessionCount": 4,
+    "existingPhoneClientUnexpired": true,
+    "environmentId": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+    "existingPhoneRegistrationId": "b2da04c9-2149-4323-b433-113b69974ff3",
+    "registrationRevision": 1,
+    "pendingPushJobs": 0,
+    "pushSecretMode": "0400 root-only; maus read denied",
+    "oomKilled": false,
+    "containerAndVolumeRemoved": true
+  },
+  "formalRuntime": {
+    "origin": "https://woowtechbot-openclaw.woowtech.io",
+    "quadletDryRun": "pass; 3 files and 3 units verified",
+    "installedImageIdMatchesDerivedImage": true,
+    "service": "active",
+    "container": "running, healthy",
+    "containerRestartCount": 0,
+    "oomKilled": false,
+    "localAndPublicHealthStatus": 200,
+    "noPairingSmoke": "21 passed, 0 failed",
+    "botCount": 2,
+    "sessionCount": 4,
+    "existingPhoneClientSessionId": "e7a016cf-55ab-41a3-8b63-e4ff6cad6127",
+    "existingPhoneClientScopeAndExpiry": "client scope present; unexpired",
+    "environmentId": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+    "androidPushEnabled": true,
+    "androidPushRelayUrl": "https://assistant-push-test.woowtech.io/v1/android-push",
+    "dedicatedCredentialConfigured": true,
+    "credentialValueRecorded": false,
+    "pushSecretMode": "0400 root-only; maus read denied",
+    "unauthenticatedRelayProbe": {
+      "getStatus": 404,
+      "postEmptyJsonStatus": 401,
+      "jsonResponses": true,
+      "redirects": false
+    },
+    "device": {
+      "sessionId": "e7a016cf-55ab-41a3-8b63-e4ff6cad6127",
+      "serviceId": "21c51aff-99fc-46ec-a970-f75b96658059",
+      "registrationId": "b2da04c9-2149-4323-b433-113b69974ff3",
+      "revision": 1,
+      "state": "registered",
+      "pendingPushJobs": 0,
+      "matchesPreUpgradeDeviceRecord": true,
+      "phoneFcmReceivedAfterUpgrade": false
+    },
+    "relayIndependentPostUpgradeReadOnly": {
+      "checkedAtUtc": "2026-11-26T15:40:27.728Z",
+      "observer": "PaaS external relay owner; persisted /data/relay.json read only",
+      "environmentIdMatched": true,
+      "serviceIdMatched": true,
+      "sessionIdMatched": true,
+      "registrationIdMatched": true,
+      "revision": 1,
+      "live": true,
+      "installationIdentityMatched": true,
+      "tokenPresentWithoutReadingItsValue": true,
+      "pendingEvents": 0,
+      "totalRetainedEvents": 0,
+      "sendOrRevokePerformed": false
+    }
+  },
+  "androidAcceptanceHold": {
+    "reason": "Android is aligning the original POCO with integrated preview 06 UI/UX and preparing a same-signature woow.22 test build",
+    "allArtificialPhoneEventsHeld": true,
+    "allNaturalModelRequestsHeld": true,
+    "oldHomeReadyValidForResume": false,
+    "newPerSiteReadyRequired": true,
+    "newPairingCodeCreated": false,
+    "existingBindingRevoked": false,
+    "nativeNotificationPagePendingTextRootCauseKnown": false
+  },
+  "limits": [
+    "The Podman derived image is installed locally but has no registry digest or Podman GitHub release yet.",
+    "The preserved registration and independent post-upgrade relay state prove device binding, not phone FCM receipt after this upgrade.",
+    "The native notification page's pending registration or removal text is unresolved and is being investigated in the Android workstream.",
+    "No pairing code, phone event, model request, or revocation was performed during this upgrade."
+  ]
+}

@@ -30,7 +30,8 @@ render_args() {
   published=''
   [[ -z $(ql_env_get WTB_PUBLISHED_URL "") ]] || published="PublishPort=$prefix$pport:8081"
   for secret in woowtechbot-signin-relay-token woowtechbot-signin-access-client-secret \
-    woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url; do
+    woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url \
+    woowtechbot-android-push-credential; do
     if [[ $(ql_env_get WTB_RENDER_ASSUME_SECRETS "") == all ]] || podman secret exists "$secret" 2>/dev/null; then
       lines+="Secret=$secret,type=mount,uid=0,gid=0,mode=0400"$'\n'
     fi

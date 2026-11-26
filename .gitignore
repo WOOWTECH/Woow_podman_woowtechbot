@@ -4,5 +4,6 @@
 # test fixtures carry example values only
 !tests/fixtures/*.env
 .build/
+.private/
 node_modules/
 __pycache__/
