@@ -4,6 +4,8 @@ woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://gith
 
 > **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原、Codex 真模型長回覆、OpenAI 相容閘道的真上游長回覆與大型工具參數，以及原有兩個 Claude bot 的真模型回覆已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
+2026-11-26 的 [HA／Podman 雙邊實測對照](docs/validation/podman-ha-parity-20261126.json) 記錄 Podman 30 輪真模型、公開附件與發布頁、配對碼與 QR 解碼，以及重啟和冷還原後的原 bot 回覆；也逐項標明仍需上游代寄服務、Cockpit 管理員瀏覽器或平板實體操作的驗收。
+
 ## 它怎麼運作
 
 Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.22`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
