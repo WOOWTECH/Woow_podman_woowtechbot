@@ -52,15 +52,29 @@
     "relayAckRevisionMatched": true
   },
   "androidAcceptance": {
-    "phoneReceipt": "pending Android parent verification",
-    "notificationBodyTapAndExactThread": "pending Android parent verification",
+    "phoneReceipt": "pass; independent POCO dumpsys at 2026-11-26T16:47:29.676569Z",
+    "notificationTagServiceBotThreadEventMatched": true,
+    "notificationChannel": "woowtechbot_attention",
+    "notificationPrivacy": "SECRET",
+    "visibleText": "機器人需要您的注意，請開啟查看。",
+    "bodyTapTarget": "BotServiceActivity; Podman QA bot and composer with the original main conversation visible",
+    "conversationPickerFirstTaskHighlightedAndOtherThreeNotHighlighted": true,
+    "serverReadOnlyMatchAtUtc": "2026-11-26T16:51:15.497Z",
+    "serverActiveAndMainThreadIdMatched": true,
+    "serverTaskTitleStartsWithOriginalLongReplyPrompt": true,
+    "serverSeedMarkerPresent": true,
+    "paasIndependentRelayStateAtUtc": "2026-11-26T16:52:58.004Z",
+    "paasIndependentRelayState": "sent",
+    "paasIndependentRelayPendingEvents": 0,
+    "result": "pass: ordinary Home background artificial attention FCM receipt and exact conversation navigation",
     "relayAckIsPhoneDeliveryProof": false
   },
   "coordination": {
     "androidParentSession": "ff9ee02365d04f45b296077c894a7a40",
     "androidParentMessageAcceptedStatus": 202,
     "otherSitesEventsHeld": true,
-    "podmanModelRequestsHeld": true,
+    "modelRequestsHeldUntilSeparateNaturalHomeReady": true,
+    "subsequentNaturalAcceptanceEvidence": "podman-poco3822-fcm-natural-20261126.json",
     "noNewPairingOrRevocation": true,
     "secretsRecorded": false
   }
