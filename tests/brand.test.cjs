@@ -1,7 +1,7 @@
 'use strict';
 // node --test tests/: brand.cjs on a copy of the base image's index.html and web manifest with the icons of
 // image/brand: tests/fixtures/brand is from ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.14 (MausBot title),
-// tests/fixtures/brand/rc20 from 0.1.7-rc.20 (the base this edition runs: already woowtechbot).
+// tests/fixtures/brand/rc20 from 0.1.7-rc.20; rc21 from the pinned 0.1.7-rc.21 image.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
@@ -46,6 +46,32 @@ test('the 0.1.7-rc.20 base already has the name: only the icon addresses change'
   assert.equal(changed(read(dir, 'manifest.webmanifest'), read(rc20, 'manifest.webmanifest')).length, 2);
   assert.equal(run('--check', dir).status, 0);
   assert.match(run(dir).stdout, /already in place/);
+});
+
+test('the 0.1.7-rc.21 content-hashed references are accepted without rewriting', () => {
+  const dir = dist(path.join(fixtures, 'rc21'));
+  const html = read(dir, 'index.html'), manifest = read(dir, 'manifest.webmanifest');
+  assert.equal(run('--check', dir).status, 0);
+  const applied = run(dir);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.match(applied.stdout, /already in place \(per-file SHA256\)/);
+  assert.equal(read(dir, 'index.html'), html);
+  assert.equal(read(dir, 'manifest.webmanifest'), manifest);
+});
+
+test('the 0.1.7-rc.21 check rejects a changed icon or manifest reference', () => {
+  for (const [file, pattern] of [
+    ['index.html', /app-icon\.svg\?v=[a-f0-9]{12}/],
+    ['index.html', /manifest\.webmanifest\?v=[a-f0-9]{12}/],
+    ['manifest.webmanifest', /app-icon-192\.png\?v=[a-f0-9]{12}/],
+  ]) {
+    const dir = dist(path.join(fixtures, 'rc21'));
+    const altered = read(dir, file).replace(pattern, match => match.slice(0, -12) + '000000000000');
+    fs.writeFileSync(path.join(dir, file), altered);
+    assert.equal(run('--check', dir).status, 1);
+    assert.equal(run(dir).status, 1);
+    assert.equal(read(dir, file), altered);
+  }
 });
 
 test('applies to the rc.14 base files: iPhone name and versioned icon addresses, nothing else', () => {

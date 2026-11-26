@@ -6,12 +6,12 @@ woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://gith
 
 ## 它怎麼運作
 
-Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.20`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
+Podman 版直接執行 HA 外掛的映像（`ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.22`，以 digest 固定），外面只加一層 Podman 啟動程式。在 HA 上，Supervisor 會把外掛設定寫成 `/data/options.json` 並先檢查一遍；Podman 沒有 Supervisor，所以這一層做同樣的事：
 
 1. 讀 `~/.config/woowtechbot/woowtechbot.env` 的 `WTB_*` 設定，以及選用的 podman secret；
 2. 照 HA 外掛 `config.yaml` 的規則檢查，再用外掛自己的檢查程式檢查；有錯就停下，並指出是哪個設定（結束碼 78）；
 3. 把設定寫到容器內的私有 tmpfs，`/data/options.json` 只是連結，所以帳密不會留在資料磁碟或它的備份裡；
-4. 執行 HA 外掛原本的程式，程式不做任何修改。建置映像時只多做一件事：檢查網頁用的是 PaaS 相同的 woowtech bot 圖示，並在圖示網址後加版本標記（見「圖示」）。
+4. 執行 HA 外掛原本的程式，程式不做任何修改。建置映像時檢查網頁用的是 PaaS 相同的 woowtech bot 圖示；HA rc.22 已帶內容雜湊網址，Podman 會保留它（見「圖示」）。
 
 ## 需求
 
@@ -228,6 +228,7 @@ scripts/restore.sh 備份目錄 --identity 私鑰檔 --with-secrets
 - 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
 - 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
 - 上游 MausBot 的廣告（團隊方案、ModelGo、Boat 優惠等）和「公告」頁已拿掉，這是 PaaS 的修補 0016，HA 映像從 0.1.7-rc.20 起帶著。畫面上還有約一百處「MausBot」字樣，講的是手機 App、MausBot Cloud 和帳號等上游的東西，和 PaaS 一樣刻意保留。
+- HA rc.22 帶入 PaaS 修補 0017：頭像的十種通用輪廓、十種表情和黑白五官可切換；兩種編輯器不再列節慶款式，也不會自動裝扮。舊節慶 body ID 僅在畫面顯示通用機器人，原資料與上傳頭像保留。
 - 官方 App 2.0.0 從檔案選擇器選 CSV 會被拒，可以改成 .txt 或壓成 ZIP（上游 #7084）。配對連結沒有確認畫面。
 - 發布的網站請用 `.js` 當 JavaScript module 的副檔名：`.mjs` 會被當成一般下載檔送出，瀏覽器不會執行（HA、PaaS 相同）。
 - Codex 的工具範圍一定要保留 `native:*`。

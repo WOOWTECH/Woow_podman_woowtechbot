@@ -5,11 +5,8 @@
 //   - it checks that /app/dist/ carries the four woowtech bot icons, so a base that goes back to MausBot
 //     icons stops the build instead of reaching the host;
 //   - index.html: the home screen name on iPhones (apple-mobile-web-app-title) is woowtechbot;
-//   - index.html and manifest.webmanifest: the icon addresses get ?v=<hash of the icons>, so Cloudflare and
-//     browsers do not answer with a MausBot icon they still keep in their cache (the edge keeps png and svg
-//     files for hours).
-// The app's own code asks for /app-icon.svg without ?v= (About dialog, settings): it gets the new file once
-// those caches run out, within a few hours.
+//   - rc.20 and older receive the existing shared icon hash; rc.21 and newer already have PaaS artwork
+//     content hashes on each icon and on the manifest, which this checker preserves byte for byte.
 //   brand.cjs <dist>          apply; fails when the files are not as expected (a new base changed them)
 //   brand.cjs --check <dist>  only check that it is applied
 const crypto = require('node:crypto');
@@ -24,6 +21,7 @@ const ICONS = {
   'apple-touch-icon.png': '217fe540639eabae893ba14d284d913f2bd31b76a545d1d1612ef56ef3f8e1ac',
 };
 const VERSION = crypto.createHash('sha256').update(Object.values(ICONS).join('')).digest('hex').slice(0, 10);
+const contentHash = bytes => crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 12);
 const NAME = 'woowtechbot';
 const TITLE = /<meta name="apple-mobile-web-app-title" content="[^"]*" \/>/g;
 const HREFS = ['app-icon.svg', 'apple-touch-icon.png'];
@@ -51,13 +49,24 @@ function problems(dist) {
   const found = [];
   const titles = html.match(TITLE) || [];
   if (titles.length !== 1 || !titles[0].includes(`content="${NAME}"`)) found.push('the iPhone home screen name is not woowtechbot');
-  for (const file of HREFS) if (count(html, ref(file, 'href=', VERSION)) !== 1) found.push(`index.html does not ask for ${file}?v=${VERSION}`);
-  let json;
-  try { json = JSON.parse(fs.readFileSync(manifest, 'utf8')); } catch { found.push('manifest.webmanifest is not valid JSON'); return found; }
+  let json, manifestText;
+  try { manifestText = fs.readFileSync(manifest, 'utf8'); json = JSON.parse(manifestText); } catch { found.push('manifest.webmanifest is not valid JSON'); return found; }
   if (json.name !== NAME || json.short_name !== NAME) found.push('the web manifest name is not woowtechbot');
   const srcs = (json.icons || []).map(icon => icon.src);
-  for (const file of SRCS) if (!srcs.some(src => /^\.?\//.test(src) && src.replace(/^\.?\//, '') === `${file}?v=${VERSION}`)) found.push(`the web manifest does not ask for ${file}?v=${VERSION}`);
+  const hasSrc = (file, version) => srcs.some(src => /^\.?\//.test(src) && src.replace(/^\.?\//, '') === `${file}?v=${version}`);
+  const contentVersioned = HREFS.every(file => count(html, ref(file, 'href=', ICONS[file].slice(0, 12))) === 1)
+    && count(html, ref('manifest.webmanifest', 'href=', contentHash(manifestText))) === 1
+    && SRCS.every(file => hasSrc(file, ICONS[file].slice(0, 12)));
+  if (!contentVersioned) {
+    for (const file of HREFS) if (count(html, ref(file, 'href=', VERSION)) !== 1) found.push(`index.html does not ask for ${file}?v=${VERSION}`);
+    for (const file of SRCS) if (!hasSrc(file, VERSION)) found.push(`the web manifest does not ask for ${file}?v=${VERSION}`);
+  }
   return found;
+}
+
+function versionLabel(dist) {
+  const html = fs.readFileSync(files(dist).index, 'utf8');
+  return html.includes(`app-icon.svg?v=${ICONS['app-icon.svg'].slice(0, 12)}`) ? 'per-file SHA256' : `v=${VERSION}`;
 }
 
 function apply(dist) {
@@ -95,9 +104,9 @@ function main(argv) {
       checkIcons(dist);
       const found = problems(dist);
       if (found.length) fail(found.join('; '));
-      process.stdout.write(`brand: woowtech bot icons in place (v=${VERSION})\n`);
+      process.stdout.write(`brand: woowtech bot icons in place (${versionLabel(dist)})\n`);
     } else {
-      process.stdout.write(`brand: woowtech bot icons ${apply(dist)} (v=${VERSION})\n`);
+      process.stdout.write(`brand: woowtech bot icons ${apply(dist)} (${versionLabel(dist)})\n`);
     }
     return 0;
   } catch (err) {
