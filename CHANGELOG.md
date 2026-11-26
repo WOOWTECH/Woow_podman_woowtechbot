@@ -14,8 +14,8 @@ the revision of this repo's packaging on it.
   restores age-encrypted secrets, runs the installer and smoke checks, and attempts to roll back
   on failure. `--verify-only` checks an archive without touching the service.
 - Real Podman volume round trips with SQLite, symlinks and a synthetic encrypted secret; malformed
-  archives and changed checksums are rejected. The live N100's cold backup and restore are
-  verified separately before this revision is merged.
+  archives and changed checksums are rejected. The live N100 completed a cold backup and full
+  restore on the HA rc.22 image, with its existing bots and sessions intact.
 
 ## 0.1.7-rc.22-1 (2026-11-26)
 
