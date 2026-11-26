@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-26",
+  "release": "0.1.7-rc.22-2",
+  "instance": "installed Podman at https://woowtechbot-openclaw.woowtech.io",
+  "provider": {
+    "baseUrl": "https://paas-cs-32e92be2-5b2e4e66.woowtech.io/v1",
+    "api": "Chat Completions",
+    "configuredBotModel": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "key": "stored in the bot private OpenAI-compatible provider configuration; omitted from evidence"
+  },
+  "gateway": {
+    "enabledInInstalledSettings": true,
+    "upstream": "https://paas-cs-32e92be2-5b2e4e66.woowtech.io/v1",
+    "providerUrlInBot": "http://127.0.0.1:8092",
+    "defaultMaxTokens": 32000,
+    "listening": "container loopback only",
+    "realUpstreamDirectShortReply": "DIRECT-OK",
+    "realUpstreamGatewayShortReply": "GATEWAY-OK",
+    "missingLimitRequest": "real upstream returned HTTP 200; gateway logged added max_tokens=32000",
+    "afterRestart": {
+      "gatewayHealthHttp": 200,
+      "publicBotHealthHttp": 200,
+      "systemd": "active/running; NRestarts=0",
+      "containerHealth": "healthy",
+      "botReply": "PERSIST-OK"
+    }
+  },
+  "longResponse": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "path": "installed bot OpenAI-compatible driver -> gateway -> real upstream; streamed Chat Completions",
+    "characters": 4790,
+    "utf8Bytes": 13930,
+    "sha256": "824d92e11a9c65c3a8e76264f7e628946209dafe345d33156dbf3e95aaf97fad",
+    "outputTokensFromBotDigest": 5227,
+    "paragraphs": 50,
+    "uniqueChineseOrdinalLabels": 50,
+    "firstLabel": "第一項",
+    "lastLabel": "第五十項",
+    "minimumParagraphCharacters": 84,
+    "endsWith": "END-50",
+    "turnSucceeded": true,
+    "limitation": "The model did not meet the prompt's requested minimum of 110 characters in every paragraph; the complete 50-paragraph response and end marker were delivered."
+  },
+  "largeToolArguments": {
+    "freeModelComparison": {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "gatewayHttp": 200,
+      "directUpstreamHttp": 200,
+      "bothReturnedValidToolCallJson": true,
+      "bothArgumentCharacters": 1039,
+      "bothPayloadCharacters": 1024,
+      "bothIncompleteAgainst100Records": true,
+      "nonStreamingGatewayAttempt": "upstream proxy HTTP 524 after 125 seconds"
+    },
+    "acceptedModel": "openai/gpt-6-sol",
+    "path": "gateway -> same real upstream; streamed Chat Completions with forced function tool call",
+    "http": 200,
+    "gatewayLogged": "added max_tokens=32000",
+    "sseChunks": 1012,
+    "finishReason": "tool_calls",
+    "toolCallCount": 1,
+    "argumentsCharacters": 18821,
+    "argumentsValidJson": true,
+    "payloadCharacters": 18707,
+    "recordCount": 100,
+    "firstRecord": "001",
+    "lastRecord": "100",
+    "minimumRecordCharacters": 186,
+    "endsWith": "END-100",
+    "providerReportedCompletionTokens": 1194,
+    "providerReportedCostUsd": 0.012174
+  },
+  "cleanup": {
+    "temporaryOpenAiCompatBotDeleted": true,
+    "originalBotCount": 2,
+    "originalModelSelections": ["claude-haiku-5-5", "claude-sonnet-5"],
+    "originalTaskCounts": [4, 2]
+  },
+  "separateAcceptance": "The original Claude bots still require Claude subscription OAuth authorization, followed by one real reply from each original conversation."
+}
