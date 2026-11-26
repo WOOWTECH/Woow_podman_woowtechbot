@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-26",
+  "release": "0.1.7-rc.22-2",
+  "instance": "installed Podman at https://woowtechbot-openclaw.woowtech.io",
+  "device": "Pixel Tablet running MausBot App",
+  "transport": "Mika HTTP MCP, task 08e594d1-d2d6-4498-923b-97a9b345c9e1",
+  "temporaryBot": {
+    "id": "a24f1ccf-9ed1-4538-9df9-e4aabfabf16f",
+    "name": "Podman Codex 通知驗收 20261126",
+    "modelSelection": {"instanceId": "codex", "model": "gpt-6.2-sol"},
+    "notifications": true,
+    "approvalMode": "ask"
+  },
+  "longResponse": {
+    "source": "Pixel Tablet App chat, real Codex model in the installed Podman container",
+    "completedAtTaipei": "2026-11-26T14:53:29.587+08:00",
+    "characters": 2969,
+    "utf8Bytes": 8421,
+    "sha256": "d68daaf647ce85cca59cc824532ac738f74b6b183d402e86d29c2c8b36bb991f",
+    "titlePresent": true,
+    "numberedParagraphs01Through20Present": true,
+    "endsWithEnd20": true,
+    "observedInApp": "All 20 numbered paragraphs and END-20 visible; no error or truncation"
+  },
+  "androidNotification": {
+    "appInBackgroundWhenResponseFinished": true,
+    "systemNotificationTitle": "Podman Codex 通知驗收 20261126 finished",
+    "channel": "bot_messages / 機器人訊息",
+    "importance": 4,
+    "observedAtTaipei": "2026-11-26T14:53:28+08:00 approximately",
+    "distinctFromPersistentConnectionNotification": true,
+    "persistentConnectionChannel": "背景連線",
+    "persistentConnectionImportance": 2,
+    "observationMethod": "Android system notification list via Mika; no notification tap test"
+  },
+  "cleanup": {
+    "tabletRestoredTo": "https://openmausbot.woowtech.io",
+    "temporaryBotDeleted": true,
+    "originalBotsPreserved": true,
+    "originalBotCountAfterCleanup": 2,
+    "podmanHealthAfterCleanup": "healthy; running; restart count 0; public HTTP 200",
+    "codexLoginAfterCleanup": "Logged in using ChatGPT"
+  },
+  "scopeLimit": "This accepts native Codex bot replies and phone notifications. It does not exercise the optional OpenAI-compatible llm-gw with a real upstream or long tool parameters."
+}
