@@ -17,9 +17,9 @@ CONTAINERS=("woowtechbot:woowtechbot.service" "woowtechbot-tunnel:woowtechbot-tu
 # every credential of this app is a podman secret (scripts/secret.sh).
 ENV_CREDENTIAL_ALLOW=''
 # The HA add-on image this edition runs, pinned by its OCI index digest (amd64 only). It is the
-# image of WOOWTECH/Woow_ha_woowtechbot_add_on 0.1.7-rc.20; update both lines together.
-WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.20
-WTB_BASE_IMAGE=ghcr.io/woowtech/amd64-woowtechbot@sha256:9f569c94ee26a0de719c51c318b7b7c92411be0e80b7b199baa600acb13566c2
+# image of WOOWTECH/Woow_ha_woowtechbot_add_on 0.1.7-rc.22; update both lines together.
+WTB_BASE_TAG=ghcr.io/woowtech/amd64-woowtechbot:0.1.7-rc.22
+WTB_BASE_IMAGE=ghcr.io/woowtech/amd64-woowtechbot@sha256:10ef3f1fd69f55359dcdfa6d60e3818cd2d4bdab8da684a09b66c5ed47f8d4fc
 # the local image: one tag per repo VERSION, so an upgrade keeps the previous image for rollback
 WTB_VERSION=$(cat "$REPO/VERSION")
 WTB_IMAGE=localhost/woowtechbot-podman:$WTB_VERSION
