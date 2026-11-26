@@ -85,6 +85,21 @@
       "pendingPushJobs": 0,
       "matchesPreUpgradeDeviceRecord": true,
       "phoneFcmReceivedAfterUpgrade": false
+    },
+    "relayIndependentPostUpgradeReadOnly": {
+      "checkedAtUtc": "2026-11-26T15:40:27.728Z",
+      "observer": "PaaS external relay owner; persisted /data/relay.json read only",
+      "environmentIdMatched": true,
+      "serviceIdMatched": true,
+      "sessionIdMatched": true,
+      "registrationIdMatched": true,
+      "revision": 1,
+      "live": true,
+      "installationIdentityMatched": true,
+      "tokenPresentWithoutReadingItsValue": true,
+      "pendingEvents": 0,
+      "totalRetainedEvents": 0,
+      "sendOrRevokePerformed": false
     }
   },
   "androidAcceptanceHold": {
@@ -99,7 +114,7 @@
   },
   "limits": [
     "The Podman derived image is installed locally but has no registry digest or Podman GitHub release yet.",
-    "The existing registration and prior relay ACK prove device binding, not phone FCM receipt after this upgrade.",
+    "The preserved registration and independent post-upgrade relay state prove device binding, not phone FCM receipt after this upgrade.",
     "The native notification page's pending registration or removal text is unresolved and is being investigated in the Android workstream.",
     "No pairing code, phone event, model request, or revocation was performed during this upgrade."
   ]
