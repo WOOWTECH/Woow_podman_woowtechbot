@@ -28,6 +28,8 @@ jobs:
         run: for f in cockpit/page/bot.js tests/cockpit-lab/fake-app.cjs tests/cockpit-page.cjs tests/llm-gw.cjs; do node --check "$f"; done
       - name: Cockpit page helper (fake podman, the real pair.cjs, a stand-in app)
         run: python3 tests/test_cockpit_helper.py -v
+      - name: Backup archive path guard
+        run: python3 tests/test_backup_tar.py -v
 
   repo:
     runs-on: ubuntu-24.04
