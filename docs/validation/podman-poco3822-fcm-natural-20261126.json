@@ -5,6 +5,8 @@
     "source": "Android parent; sole POCO operator",
     "atUtc": "2026-11-26T16:51:43.059421Z",
     "key": "poco3822-podman-natural-20261126T165143059421Z",
+    "appSourceRevisionAtAcceptance": "9e0382d2",
+    "appVariantAtAcceptance": "normal",
     "profilePreserved": true,
     "homeConfirmedByAdb": true
   },
@@ -81,6 +83,20 @@
     "assistantTurnSucceeded": true,
     "assistantExpectedMarkerPresent": false,
     "botBusy": false
+  },
+  "subsequentAndroidInstall": {
+    "reportedInstallWindowUtc": "2026-11-26T17:04Z",
+    "appSourceRevision": "0a78edb2",
+    "appVariantAndVersion": "normal woow.22/code3822",
+    "installedApkSha256": "177b980a36b4d6099873149d0f684c421c926bf5b39587e4845462e71008ae05",
+    "originalSignatureAndFirstInstallTimePreserved": true,
+    "existingProfilesAndNetworkPreserved": true,
+    "fourServiceDiscoveryIdentityAndCapabilityPassed": true,
+    "globalNotificationRegistrationUi": "REGISTERED",
+    "newPodmanHomeOrColdReady": false,
+    "podmanFcmDeliveryAcceptanceOnThisSource": "not tested",
+    "eventsAndModelsHeld": true,
+    "note": "Earlier phone delivery and navigation results belong to source 9e0382d2 and do not establish delivery on this replacement APK"
   },
   "limits": [
     "This tested ordinary Home background FCM; it was not a cold process, offline recovery, or mobile network handover test.",

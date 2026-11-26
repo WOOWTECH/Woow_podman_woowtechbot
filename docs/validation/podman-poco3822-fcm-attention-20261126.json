@@ -13,6 +13,8 @@
     "atUtc": "2026-11-26T16:42:58.785558Z",
     "key": "poco3822-podman-background-20261126T164258785558Z",
     "app": "woow.22/code3822",
+    "appSourceRevisionAtAcceptance": "9e0382d2",
+    "appVariantAtAcceptance": "normal",
     "profile": "android-qa-podman",
     "qaBotAndComposerSeen": true,
     "homeConfirmedByTopResumedActivity": true,
@@ -67,6 +69,7 @@
     "paasIndependentRelayState": "sent",
     "paasIndependentRelayPendingEvents": 0,
     "result": "pass: ordinary Home background artificial attention FCM receipt and exact conversation navigation",
+    "resultAppliesOnlyToAppSourceRevision": "9e0382d2",
     "relayAckIsPhoneDeliveryProof": false
   },
   "coordination": {
