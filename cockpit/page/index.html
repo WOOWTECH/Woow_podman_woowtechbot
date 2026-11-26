@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>woowtechbot</title>
+  <link rel="stylesheet" href="../../static/branding.css">
+  <link rel="stylesheet" href="bot.css">
+  <script src="../base1/cockpit.js" defer></script>
+  <script src="bot.js" defer></script>
+</head>
+<body>
+  <main class="page" id="main">
+    <header class="page-header">
+      <div>
+        <h1>woowtechbot</h1>
+        <p class="muted">登入、裝置配對與服務狀態。</p>
+      </div>
+      <div class="button-group">
+        <a class="button" id="open-bot" target="_blank" rel="noopener noreferrer" hidden>開啟 woowtechbot</a>
+        <button type="button" id="refresh" disabled>重新整理</button>
+      </div>
+    </header>
+
+    <p id="access-note" class="notice" role="status" hidden>此頁只給 Cockpit 管理員使用。請在 Cockpit 頂端開啟「管理員存取權限」，開啟後會自動載入。</p>
+    <div id="page-error" class="notice" hidden>
+      <p id="error-message" role="alert"></p>
+      <button id="retry" type="button">重試</button>
+    </div>
+    <p id="feedback" class="status-line" role="status" aria-live="polite" aria-atomic="true">正在讀取狀態…</p>
+
+    <div id="content" hidden>
+      <section class="card" aria-labelledby="status-heading">
+        <div class="card-heading">
+          <h2 id="status-heading">服務狀態</h2>
+          <span id="status-badge" class="badge">確認中</span>
+        </div>
+        <dl class="facts">
+          <div><dt>執行方式</dt><dd id="fact-podman">—</dd></div>
+          <div><dt>版本</dt><dd id="fact-version">—</dd></div>
+          <div><dt>啟動時間</dt><dd id="fact-started">—</dd></div>
+          <div><dt>對外網址</dt><dd id="fact-public">—</dd></div>
+          <div><dt>發布網站網址</dt><dd id="fact-published">—</dd></div>
+          <div><dt>AI 模型</dt><dd id="fact-engines">—</dd></div>
+          <div><dt>首次初始化信箱</dt><dd id="fact-admin">—</dd></div>
+          <div><dt>Email 登入服務</dt><dd id="fact-mail">—</dd></div>
+        </dl>
+        <p id="status-help" class="small muted" hidden></p>
+        <div class="button-group"><button type="button" id="open-services" hidden>在「服務管理」查看日誌或重新啟動</button></div>
+      </section>
+
+      <div class="pair-grid">
+        <section class="card" id="browser-card" aria-labelledby="browser-heading">
+          <div class="card-heading"><h2 id="browser-heading">瀏覽器配對</h2><span id="browser-badge" class="badge">尚未產生</span></div>
+          <p id="browser-state" role="status" aria-live="polite" aria-atomic="true"></p>
+          <div id="browser-secret" class="secret" hidden>
+            <label for="browser-code">一次性配對碼</label>
+            <input id="browser-code" class="code" type="text" readonly autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="browser-countdown">
+            <p class="expiry"><span id="browser-countdown" class="countdown" role="timer" aria-live="off"></span><span class="muted">到期時間 <time id="browser-expiry"></time></span></p>
+            <div class="button-group">
+              <a class="button primary" id="browser-open" target="_blank" rel="noopener noreferrer">開啟並配對</a>
+              <button type="button" id="browser-copy-code">複製配對碼</button>
+              <button type="button" id="browser-copy-link">複製連結</button>
+            </div>
+            <p id="browser-help" class="small muted"></p>
+          </div>
+          <div class="button-group">
+            <button type="button" id="browser-generate" class="primary">產生配對碼</button>
+            <button type="button" id="browser-cancel" hidden>取消這次配對</button>
+          </div>
+        </section>
+
+        <section class="card" id="phone-card" aria-labelledby="phone-heading">
+          <div class="card-heading"><h2 id="phone-heading">手機 App 配對</h2><span id="phone-badge" class="badge">尚未產生</span></div>
+          <p id="phone-state" role="status" aria-live="polite" aria-atomic="true"></p>
+          <div id="phone-secret" class="secret" hidden>
+            <div class="qr"><img id="phone-qr" width="224" height="224" alt="使用 MausBot App 掃描的一次性配對 QR Code" hidden></div>
+            <p class="small muted">開啟 MausBot App，在連接伺服器的畫面掃描 QR Code；或手動填入下面兩欄，再按「連線」。</p>
+            <label for="phone-address">伺服器網址</label>
+            <input id="phone-address" class="code address" type="text" readonly autocomplete="off" spellcheck="false">
+            <label for="phone-code">配對碼</label>
+            <input id="phone-code" class="code" type="text" readonly autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="phone-countdown">
+            <p class="expiry"><span id="phone-countdown" class="countdown" role="timer" aria-live="off"></span><span class="muted">到期時間 <time id="phone-expiry"></time></span></p>
+            <div class="button-group">
+              <button type="button" id="phone-copy-address">複製伺服器網址</button>
+              <button type="button" id="phone-copy-code">複製配對碼</button>
+              <a class="button" id="phone-open">開啟 MausBot App</a>
+            </div>
+            <p class="small muted">用手機看這一頁時，裝好 MausBot App 後可以直接按「開啟 MausBot App」。</p>
+          </div>
+          <div class="button-group">
+            <button type="button" id="phone-generate" class="primary">產生手機配對</button>
+            <button type="button" id="phone-cancel" hidden>取消這次配對</button>
+          </div>
+        </section>
+      </div>
+      <p class="small muted">配對碼 10 分鐘內有效，只能用一次，配對後的裝置具有管理員權限，請只在你自己的裝置使用。重新產生只會替換你這個 Cockpit 帳號尚未使用的同一種配對碼；取消不會登出已登入的裝置。</p>
+
+      <section class="card" aria-labelledby="devices-heading">
+        <div class="card-heading"><h2 id="devices-heading">登入中的裝置</h2><span id="devices-count" class="badge">—</span></div>
+        <p id="devices-empty" class="muted" hidden>目前沒有登入中的裝置。</p>
+        <table id="devices" hidden>
+          <thead><tr><th scope="col">裝置</th><th scope="col">權限</th><th scope="col">登入時間</th><th scope="col">最近使用</th><th scope="col">到期</th><th scope="col">操作</th></tr></thead>
+          <tbody id="devices-body"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="signout-dialog" aria-labelledby="signout-title">
+    <h2 id="signout-title">登出這台裝置？</h2>
+    <p id="signout-text"></p>
+    <p id="signout-error" class="notice" role="alert" hidden></p>
+    <div class="button-group dialog-footer">
+      <button type="button" id="signout-cancel">取消</button>
+      <button type="button" id="signout-confirm" class="primary">登出</button>
+    </div>
+  </dialog>
+</body>
+</html>

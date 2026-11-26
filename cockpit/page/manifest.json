@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "requires": { "cockpit": "362" },
+  "conditions": [
+    { "path-exists": "/etc/woowtech-cockpit/woowtechbot/admins/visible" }
+  ],
+  "tools": {
+    "index": {
+      "label": "woowtechbot",
+      "order": 47,
+      "keywords": [
+        {
+          "matches": ["woowtechbot", "openmausbot", "mausbot", "bot", "pairing", "podman", "配對", "登入碼", "配對碼", "手機"]
+        }
+      ]
+    }
+  }
+}

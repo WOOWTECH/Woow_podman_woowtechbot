@@ -3,6 +3,60 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.20-1 (unreleased)
+
+- Add the `llm-gw` acceptance suite: the matching HA gateway tests plus the real Podman entry point,
+  default-off behavior, configured limits, loopback binding, request forwarding, streaming,
+  cancellation, errors, restart, log redaction and container exit on gateway failure. Uses only a
+  synthetic upstream in isolated containers. README explains endpoint selection and the remaining
+  real-model acceptance; the installed bot's gateway remains off.
+- The base is now the HA add-on image 0.1.7-rc.20 (pinned by digest), up from rc.14. rc.19 took over the
+  PaaS edition's rebrand: the woowtech bot icons, the name woowtechbot in page titles, the web manifest
+  and the texts, and for a new install a chief of staff called woowtechbot instead of MausBot. rc.20 adds
+  the PaaS patch 0016: a production build shows none of upstream's promotions (team plan, Grok Bot, MausBot
+  Cloud, Product Hunt, Boat and ModelGo offers, GitHub star, the update question, remote announcement cards)
+  and no Announcements page or menu entry. The upstream source (0.1.169), the add-on code and the options
+  are the same as in rc.14. rc.15 to rc.17 (a built-in Hermes engine, since withdrawn) are not used.
+- The icon files are no longer copied into the image: `brand.cjs` checks that the base has them (the
+  build stops when it does not) and still gives the icon addresses `?v=<hash>`. `image/brand` keeps
+  reference copies for the checks.
+- README: how to rename a chief of staff that was already created (its name is stored in the data).
+- Left as in PaaS: about a hundred texts that name MausBot on purpose (the phone app, MausBot Cloud,
+  accounts, links to upstream), and the phone app's own icon and opening screen.
+
+## 0.1.7-rc.14-5 (unreleased)
+
+- The web app has the woowtech bot icons of the PaaS edition instead of the MausBot ones of the HA
+  image: the browser tab, the About dialog, the settings, and the icon and opening screen of the app
+  added to a phone's home screen. `image/brand` holds the four files, byte for byte the ones PaaS
+  serves. `brand.cjs` checks them at build time, gives iPhone home screens the name woowtechbot and
+  asks for the icons with `?v=<hash>`, so Cloudflare and browsers do not keep showing a cached MausBot
+  icon. The build stops when a new base changes the lines it edits.
+- README: the phone App (MausBot, from the app stores) keeps its own icon and opening screen, which
+  cannot be changed here; how to put the web app on a phone's home screen instead, as PaaS advises.
+- Tests: `tests/brand.test.cjs`. `tests/smoke.sh` and `scripts/check-public.sh` check that the icons
+  arrive, the latter through Cloudflare.
+- 0.1.7-rc.14-4 was a test build that was withdrawn; the number is not used again.
+
+## 0.1.7-rc.14-3 (unreleased)
+
+- Cockpit page (`cockpit/`, `sudo scripts/cockpit-page.sh install`): the HA add-on's administrator
+  page in Cockpit's Tools, for the members of the administrator group with administrative access on.
+  Browser and phone pairing (QR code, server address, code, countdown, copy, cancel), the bot's status
+  (container, versions, addresses, AI connections, first administrator and email sign-in settings)
+  and the signed-in devices, with sign-out. A root helper runs podman as the bot's account and
+  `pair.cjs` inside the container, never restarts or changes the bot, gives each administrator codes
+  of their own and logs every change (`journalctl -t woowtech-cockpit-woowtechbot`) without the code.
+  Non-administrators get neither the page nor its files.
+- `scripts/pair.sh devices` and `signout DEVICE`. `pair.cjs state` (the page's view, never a code) and
+  `--by ACCOUNT` (an administrator's own codes).
+- A new code that cannot be shown (the QR code cannot be drawn) is cancelled instead of left usable.
+- The browser pairing text says to press 「連線」.
+- Tests: `tests/test_cockpit_helper.py` (the helper with a fake podman, the real `pair.cjs` and a
+  stand-in app), `tests/page.test.cjs` (static checks of the page), and `tests/cockpit-lab.sh` with
+  `tests/cockpit-page.cjs`: the page in a real Cockpit 362 with sudo and rootless Podman, in a
+  throwaway container, driven by Playwright.
+
 ## 0.1.7-rc.14-2 (unreleased)
 
 - Optional Cloudflare Tunnel connectors of the bot's own (`quadlet/optional`): `woowtechbot-tunnel`

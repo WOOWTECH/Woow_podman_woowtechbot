@@ -1,0 +1,309 @@
+#!/usr/bin/python3 -I
+"""Root helper of the woowtechbot page in Cockpit (installed by scripts/cockpit-page.sh).
+
+The page calls it with administrative access only, and it refuses to run without it. It does nothing
+to the bot as root: podman and systemctl run as the account that owns the container (named in
+/etc/woowtech-cockpit/woowtechbot/config.json), and pairing is done by pair.cjs inside the container.
+One JSON object goes to stdout. A one-time code is only ever there: never in arguments, logs or files.
+
+  state                   what the page shows: the container, the app, unused codes, devices
+  poll                    the app's part only (cheaper; while a code is on the screen)
+  pair browser|phone      a new code for this administrator; it replaces their unused one
+  cancel browser|phone    cancel this administrator's unused code
+  signout SESSION         sign one device out
+"""
+from contextlib import contextmanager
+from datetime import datetime
+import fcntl
+import json
+import os
+from pathlib import Path
+import pwd
+import re
+import selectors
+import signal
+import subprocess
+import sys
+import syslog
+import time
+
+CONFIG = Path('/etc/woowtech-cockpit/woowtechbot/config.json')
+LOCKS = Path('/run/woowtech-cockpit-woowtechbot')
+SERVICES_PAGE = Path('/usr/local/share/cockpit/woowtechservices/manifest.json')
+CONTAINER = 'woowtechbot'
+UNIT = 'woowtechbot.service'
+PAIR = ('node', '/opt/woowtechbot-podman/pair.cjs')
+PODMAN = '/usr/bin/podman'
+SYSTEMCTL = '/usr/bin/systemctl'
+KINDS = ('browser', 'phone')
+TRUSTED_UID = 0
+RUNTIME = '/run/user/{uid}'
+OWNER = re.compile(r'[a-z_][a-z0-9_-]{0,31}\Z')
+ACCOUNT = re.compile(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,31}\Z')
+SESSION = re.compile(r'[A-Za-z0-9_-]{1,64}\Z')
+LIMIT = 1 << 20
+TIMEOUT = 30
+
+
+class BotError(Exception):
+    pass
+
+
+def is_root():
+    return os.geteuid() == 0
+
+
+def load_owner():
+    """The account that runs the container, from a file only root can write."""
+    try:
+        if CONFIG.is_symlink():
+            raise BotError('頁面設定不可使用符號連結，請重新安裝頁面。')
+        st = CONFIG.stat()
+        if st.st_uid != TRUSTED_UID or st.st_mode & 0o022:
+            raise BotError('頁面設定必須由 root 擁有，且不可讓其他帳號寫入。')
+        name = json.loads(CONFIG.read_text())['owner']
+    except OSError:
+        raise BotError('找不到頁面設定，請重新執行 sudo scripts/cockpit-page.sh install。') from None
+    except (ValueError, KeyError, TypeError):
+        raise BotError('頁面設定的格式不正確，請重新執行 sudo scripts/cockpit-page.sh install。') from None
+    if not isinstance(name, str) or not OWNER.fullmatch(name):
+        raise BotError('頁面設定裡的帳號名稱不正確。')
+    try:
+        entry = pwd.getpwnam(name)
+    except KeyError:
+        raise BotError(f'找不到執行 woowtechbot 的帳號：{name}') from None
+    if entry.pw_uid == 0:
+        raise BotError('woowtechbot 必須用一般帳號的 rootless Podman 執行。')
+    return entry
+
+
+def caller(loginuid='/proc/self/loginuid', environ=None):
+    """The administrator behind this Cockpit session: their codes get their own label, and the log
+    names them. The audit login id is the kernel's; sudo and pkexec are the fallbacks (a container
+    cannot set the login id)."""
+    environ = os.environ if environ is None else environ
+    values = []
+    try:
+        values.append(Path(loginuid).read_text())
+    except OSError:
+        pass
+    values += [environ.get('SUDO_UID', ''), environ.get('PKEXEC_UID', '')]
+    for value in values:
+        if not re.fullmatch(r'[0-9]{1,10}', value.strip()) or int(value) in (0, 4294967295):
+            continue
+        try:
+            name = pwd.getpwuid(int(value)).pw_name
+        except KeyError:
+            continue
+        return name if ACCOUNT.fullmatch(name) else f'uid-{int(value)}'
+    return 'root'
+
+
+def stop(child):
+    for sig, patience in ((signal.SIGTERM, 3), (signal.SIGKILL, 10)):
+        try:
+            os.killpg(child.pid, sig)
+            child.wait(patience)
+            return
+        except ProcessLookupError:
+            return
+        except subprocess.TimeoutExpired:
+            continue
+
+
+def run(owner, argv, timeout=None):
+    """One fixed command as the owner, with a deadline and an output limit: (exit code, out, err)."""
+    timeout = timeout or TIMEOUT
+    runtime = RUNTIME.format(uid=owner.pw_uid)
+    if not os.path.exists(runtime + '/bus'):
+        raise BotError(f'帳號 {owner.pw_name} 的服務管理員沒有在執行，請先登入該帳號或啟用 linger。')
+    env = {'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8',
+           'HOME': owner.pw_dir, 'USER': owner.pw_name, 'LOGNAME': owner.pw_name,
+           'XDG_RUNTIME_DIR': runtime, 'DBUS_SESSION_BUS_ADDRESS': f'unix:path={runtime}/bus'}
+    as_owner = {} if os.geteuid() == owner.pw_uid else {
+        'user': owner.pw_uid, 'group': owner.pw_gid, 'extra_groups': os.getgrouplist(owner.pw_name, owner.pw_gid)}
+    try:
+        child = subprocess.Popen(argv, cwd=owner.pw_dir, env=env, stdin=subprocess.DEVNULL, umask=0o077,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, **as_owner)
+    except OSError as error:
+        raise BotError(f'無法執行 {argv[0]}：{error.strerror}') from None
+    deadline = time.monotonic() + timeout
+    out, err = bytearray(), bytearray()
+    try:
+        with child.stdout, child.stderr, selectors.DefaultSelector() as ready:
+            ready.register(child.stdout, selectors.EVENT_READ, out)
+            ready.register(child.stderr, selectors.EVENT_READ, err)
+            while ready.get_map():
+                left = deadline - time.monotonic()
+                if left <= 0:
+                    raise BotError('操作逾時，請稍後重新整理。')
+                for key, _ in ready.select(left):
+                    chunk = os.read(key.fd, 65536)
+                    if not chunk:
+                        ready.unregister(key.fileobj)
+                    key.data.extend(chunk)
+                    if len(key.data) > LIMIT:
+                        raise BotError('回應的資料過大，已停止。')
+        child.wait(max(1, deadline - time.monotonic()))
+    except subprocess.TimeoutExpired:
+        raise BotError('操作逾時，請稍後重新整理。') from None
+    finally:
+        if child.poll() is None:
+            stop(child)
+    return child.returncode, out.decode('utf-8', 'replace'), err.decode('utf-8', 'replace')
+
+
+def epoch_ms(value):
+    """Podman's start time (RFC 3339 with nanoseconds) as epoch milliseconds, or None."""
+    match = re.fullmatch(r'(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d+))?(Z|[+-]\d\d:\d\d)', value or '')
+    if not match or match[1].startswith('0001-'):
+        return None
+    zone = '+00:00' if match[3] == 'Z' else match[3]
+    return int(datetime.fromisoformat(match[1] + zone).timestamp()) * 1000 + int((match[2] or '0')[:3].ljust(3, '0'))
+
+
+def parse(text):
+    try:
+        value = json.loads(text)
+    except ValueError:
+        value = None
+    if not isinstance(value, dict):
+        raise BotError('woowtechbot 回傳的資料格式不正確。')
+    return value
+
+
+def container(owner):
+    """The bot's container as Podman sees it; None when it does not exist."""
+    code, out, err = run(owner, [PODMAN, 'container', 'inspect', CONTAINER])
+    if code:
+        if 'no such container' in err.lower():
+            return None
+        raise BotError('無法讀取 Podman 的狀態：' + err.strip()[:300])
+    try:
+        data = json.loads(out)[0]
+        labels = data['Config'].get('Labels') or {}
+        state = data['State']
+        bound = (data.get('NetworkSettings') or {}).get('Ports') or {}
+        ports = [p for p in bound.get('8080/tcp') or [] if p.get('HostPort')]
+        result = {'status': str(state.get('Status', '')), 'health': str((state.get('Health') or {}).get('Status', '')),
+                  'startedAt': epoch_ms(str(state.get('StartedAt', ''))), 'image': str(data.get('ImageName', '')),
+                  'version': str(labels.get('org.opencontainers.image.version', '')), 'local': ''}
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+        raise BotError('Podman 回傳的容器資料格式不正確。') from None
+    if labels.get('io.woowtech.app') != 'woowtechbot':
+        raise BotError(f'帳號 {owner.pw_name} 的容器 {CONTAINER} 不是這個專案安裝的，已停止。')
+    if ports:
+        host = ports[0].get('HostIp') or '127.0.0.1'
+        host = '127.0.0.1' if host in ('0.0.0.0', '::') else f'[{host}]' if ':' in host else host
+        result['local'] = f'http://{host}:{ports[0]["HostPort"]}'
+    return result
+
+
+def unit(owner):
+    code, out, _ = run(owner, [SYSTEMCTL, '--user', 'show', UNIT, '--property=ActiveState,SubState,NRestarts,LoadState'])
+    fields = dict(line.split('=', 1) for line in out.splitlines() if '=' in line) if code == 0 else {}
+    return {'active': fields.get('ActiveState', ''), 'sub': fields.get('SubState', ''),
+            'load': fields.get('LoadState', ''), 'restarts': fields.get('NRestarts', '')}
+
+
+def in_bot(owner, *args):
+    """pair.cjs inside the container. Its own messages are for the administrator; podman's are not."""
+    code, out, err = run(owner, [PODMAN, 'exec', CONTAINER, *PAIR, *args])
+    if code in (1, 2) and err.strip():
+        message = err.strip()[:500]
+        if message.startswith('用法'):
+            message = '這台的 woowtechbot 版本比頁面舊，請在主機執行 scripts/install.sh 更新後再重新整理。'
+        raise BotError(message)
+    if code:
+        raise BotError('暫時無法在 woowtechbot 容器裡執行，請稍後再試。')
+    return parse(out)
+
+
+def ready(owner):
+    box = container(owner)
+    if box is None or box['status'] != 'running':
+        raise BotError('woowtechbot 容器沒有在執行，請先啟動它。')
+    return box
+
+
+@contextmanager
+def lock(name):
+    """One change at a time per administrator and kind, so a double click never leaves two codes."""
+    LOCKS.mkdir(mode=0o700, exist_ok=True)
+    fd = os.open(LOCKS / name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise BotError('上一個操作還在進行，請稍候再試。') from None
+        yield
+    finally:
+        os.close(fd)
+
+
+def audit(by, action, result):
+    syslog.openlog('woowtech-cockpit-woowtechbot', 0, syslog.LOG_AUTHPRIV)
+    syslog.syslog(syslog.LOG_NOTICE, f'by={by} action={action} result={result}')
+
+
+def changed(by, action, work):
+    """Run a change and log who did it and how it ended; never what it returned."""
+    try:
+        result = work()
+    except BotError:
+        audit(by, action, 'failed')
+        raise
+    audit(by, action, 'ok')
+    return result
+
+
+def state(owner, by):
+    box = container(owner)
+    result = {'owner': owner.pw_name, 'by': by, 'container': box, 'unit': unit(owner), 'app': None, 'appError': '',
+              'podman': run(owner, [PODMAN, '--version'])[1].strip().rpartition(' ')[2],
+              'servicesPage': SERVICES_PAGE.exists()}
+    if box and box['status'] == 'running':
+        try:
+            result['app'] = in_bot(owner, 'state', '--by', by)
+        except BotError as error:
+            result['appError'] = str(error)
+    return result
+
+
+def pair(owner, by, kind):
+    box = ready(owner)
+    made = in_bot(owner, kind, '--json', '--by', by, '--local-origin', box['local'])
+    return {'pairing': {key: made.get(key) for key in
+                        ('id', 'kind', 'code', 'expiresAt', 'server', 'url', 'inviteUrl', 'qrSvg', 'now')}}
+
+
+def main(argv):
+    if not is_root():
+        raise BotError('請先在 Cockpit 頂端開啟「管理員存取權限」。')
+    owner, by = load_owner(), caller()
+    command, args = (argv[0], argv[1:]) if argv else ('', [])
+    if command == 'state' and not args:
+        return state(owner, by)
+    if command == 'poll' and not args:
+        return {'by': by, 'app': in_bot(owner, 'state', '--by', by)}
+    if command in ('pair', 'cancel') and len(args) == 1 and args[0] in KINDS:
+        kind = args[0]
+        with lock(f'{by}-{kind}'):
+            if command == 'pair':
+                return changed(by, f'pair-{kind}', lambda: pair(owner, by, kind))
+            return changed(by, f'cancel-{kind}', lambda: in_bot(owner, 'cancel', kind, '--json', '--by', by))
+    if command == 'signout' and len(args) == 1 and SESSION.fullmatch(args[0]) and not args[0].startswith('-'):
+        return changed(by, f'signout-{args[0][:8]}', lambda: in_bot(owner, 'signout', args[0], '--json'))
+    raise BotError('不支援這個操作。')
+
+
+if __name__ == '__main__':
+    os.umask(0o077)
+    try:
+        answer, code = main(sys.argv[1:]), 0
+    except BotError as error:
+        answer, code = {'error': str(error)}, 1
+    except Exception as error:  # noqa: BLE001 - keep the one-JSON-object contract, without any detail
+        answer, code = {'error': f'頁面元件發生未預期的錯誤（{type(error).__name__}）。'}, 1
+    print(json.dumps(answer, ensure_ascii=False))
+    sys.exit(code)
