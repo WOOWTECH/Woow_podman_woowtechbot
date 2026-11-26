@@ -3,6 +3,16 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
+## 0.1.7-rc.23-1 (local candidate)
+
+- Pin the authenticated HA rc.23 linux/amd64 GHCR manifest digest and build the Podman entry layer
+  directly on it. The Podman derived image is installed locally; registry publication is pending.
+- Enable the per-installation Android push relay using a Podman secret. Preserve existing bots,
+  sessions and the original phone's registration through a cold backup and image upgrade. The
+  server and relay registration have been verified; phone FCM receipt awaits new Android ready.
+- See `docs/validation/podman-rc23-digest-deployed-20261126.json` for the exact image, backup,
+  isolated data-clone and formal runtime checks.
+
 ## 0.1.7-rc.22-2 (unreleased)
 
 - Cold `scripts/backup.sh` stops the bot, exports the data volume and settings into a private,
