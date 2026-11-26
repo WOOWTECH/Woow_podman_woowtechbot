@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原、Codex 真模型長回覆，以及 OpenAI 相容閘道的真上游長回覆與大型工具參數已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原、Codex 真模型長回覆、OpenAI 相容閘道的真上游長回覆與大型工具參數，以及原有兩個 Claude bot 的真模型回覆已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 

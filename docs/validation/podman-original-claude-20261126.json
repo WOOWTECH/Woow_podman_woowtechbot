@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-26",
+  "release": "0.1.7-rc.22-2",
+  "instance": "installed Podman at https://woowtechbot-openclaw.woowtech.io",
+  "authorization": {
+    "method": "separate Claude subscription OAuth login inside the Podman container",
+    "claudeAuthStatus": "loggedIn=true, authMethod=claude.ai, storedClaudeAiLogin=true",
+    "loginExpiresAtUtcReportedByCli": "2026-12-24T17:28:23.846Z",
+    "credentialLocation": "under /data/.claude on the persistent woowtechbot-data volume",
+    "oauthCodeAndCredentials": "omitted from evidence and repository"
+  },
+  "originalBots": [
+    {
+      "id": "5f51f80d-afdb-4e44-b310-fc0798170a66",
+      "name": "Podman 實測 516b0108",
+      "mainThreadId": "7cb1b6b6-8ee0-4af2-8d83-787369ff75d6",
+      "modelSelection": {"instanceId": "claude", "model": "claude-haiku-5-5"},
+      "taskCount": 4,
+      "allTasksFollowBotModel": true,
+      "realReply": "CLAUDE-HAIKU-OK",
+      "replySha256": "7fbc44a258e0807e330457c2948dc011c8b5499d54142a0c214af155d34a0538",
+      "turnSucceeded": true,
+      "busyAfterReply": false
+    },
+    {
+      "id": "4407a894-baf0-4a13-a937-4db6ddb52200",
+      "name": "woowtechbot",
+      "mainThreadId": "00d810a7-e027-4782-bf5d-3f8279c85822",
+      "modelSelection": {"instanceId": "claude", "model": "claude-sonnet-5"},
+      "taskCount": 2,
+      "allTasksFollowBotModel": true,
+      "realReply": "CLAUDE-SONNET-OK",
+      "replySha256": "c6e3d1ad2e5733d2f463dad0e59a38f3d79ff8d156bca040d5a42b47492667ff",
+      "turnSucceeded": true,
+      "busyAfterReply": false
+    }
+  ],
+  "afterAcceptance": {
+    "originalBotCount": 2,
+    "claudeInstance": "available",
+    "codexInstance": "available",
+    "openAiCompatibleInstance": "available",
+    "containerHealth": "healthy",
+    "publicHealthHttp": 200
+  },
+  "scopeLimit": "This verifies a real short reply from each existing Claude bot in its main conversation. It does not claim long Claude replies, task execution, or credential refresh after the CLI-reported expiration."
+}

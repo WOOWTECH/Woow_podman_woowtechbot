@@ -76,5 +76,5 @@
     "originalModelSelections": ["claude-haiku-5-5", "claude-sonnet-5"],
     "originalTaskCounts": [4, 2]
   },
-  "separateAcceptance": "The original Claude bots still require Claude subscription OAuth authorization, followed by one real reply from each original conversation."
+  "separateAcceptance": "The original Claude bots were authorized and replied in their original conversations; see podman-original-claude-20261126.json."
 }
