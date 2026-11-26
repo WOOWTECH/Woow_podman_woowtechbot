@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#070707" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="woowtechbot" />
+    <script>
+      const ingress = location.pathname.match(/^\/api\/hassio_ingress\/[A-Za-z0-9_-]+(?=\/|$)/)?.[0];
+      const base = document.createElement("base");
+      base.href = ingress ? `${ingress}/` : "/";
+      document.head.append(base);
+    </script>
+    <link rel="icon" type="image/svg+xml" href="./app-icon.svg?v=d9f7d603282c" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=217fe540639e" />
+    <link rel="manifest" href="./manifest.webmanifest?v=334e3f97b3a0" />
+    <title>woowtechbot</title>
+    <script type="module" crossorigin src="./assets/index-DoekuKpI.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/styles-M8VCpX8j.js">
+    <link rel="stylesheet" crossorigin href="./assets/styles-BE33Dm0w.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
