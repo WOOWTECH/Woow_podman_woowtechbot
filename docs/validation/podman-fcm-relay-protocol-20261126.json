@@ -32,6 +32,26 @@
     "totalEvents": 0,
     "observer": "PaaS external relay owner"
   },
+  "isolatedCandidateRuntime": {
+    "image": "localhost/woowtechbot-podman-rc23-fcm-candidate:9172e6f",
+    "imageManifestDigest": "sha256:873a00d5662ba125fcc44c1277c35a15a5b2360b108caa635980a70b3a1cb1d7",
+    "network": "woowtechbot",
+    "secretMount": "woowtechbot-android-push-credential, root-only",
+    "client": "Node fetch within temporary OCI container",
+    "syntheticRegistrationId": "47fe86f0-b7c4-4a54-aaea-d377feddfafb",
+    "register": { "httpStatus": 200, "ack": true, "revision": 1 },
+    "revoke": { "httpStatus": 200, "ack": true, "revision": 2 },
+    "independentRelayReadback": {
+      "checkedAtUtc": "2026-11-26T13:14:05.516215Z",
+      "environmentIdMatched": true,
+      "revision": 2,
+      "tombstone": true,
+      "tokenFieldRemoved": true,
+      "pendingEvents": 0,
+      "totalEvents": 0
+    },
+    "temporaryContainerRemoved": true
+  },
   "cloudflareProbe": {
     "pythonDefaultUserAgent": "403 text/plain at edge",
     "nodeUserAgent": "401 JSON without credential; 200 JSON ACK with this installation's credential"
