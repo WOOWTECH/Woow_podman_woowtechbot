@@ -1,0 +1,40 @@
+{
+  "schema": "woowtech.podman.email-relay-source-followup.v1",
+  "observedAtUtc": "2026-11-26T13:17:18.823019Z",
+  "productionOrigin": "https://woowtechbot-openclaw.woowtech.io",
+  "productionRelease": "0.1.7-rc.22-2",
+  "priorRealBrowserRetest": {
+    "sendCodeHttp": 502,
+    "upstreamRelayHttp": 403,
+    "upstreamError": "recipient_not_allowed",
+    "mailDelivered": false,
+    "codeVerified": false,
+    "temporaryBotRecipientAccessRemoved": true,
+    "evidence": "docs/validation/podman-live-gaps-20261126.json"
+  },
+  "paasSourceInspection": {
+    "modelPath": "woow_paas_platform/src/models/woowtechbot_signin_mail.py",
+    "controllerPath": "woow_paas_platform/src/controllers/woowtechbot_signin_mail.py",
+    "adminModelPath": "woow_paas_platform/src/models/woowtechbot_ha_mail_client.py",
+    "finding": "When test_mode is true and the recipient is outside the installation's test_recipients, the relay returns 403 recipient_not_allowed before SMTP send.",
+    "adminGroupRequired": "base.group_system",
+    "sourceInspectionIsNotMailDelivery": true
+  },
+  "paasProductionDatabaseReadOnlyCheck": {
+    "method": "transaction_read_only=on, then rollback",
+    "referenceId": "79ce07c5-ebcd-4cd3-9ff2-5ff06a0d9005",
+    "clientId": 2,
+    "exactLoginUrlMatched": true,
+    "active": true,
+    "testMode": true,
+    "existingTestRecipientCount": 1,
+    "recipientValuesRead": false,
+    "settingsChanged": false
+  },
+  "nextAcceptance": {
+    "singleControlledQaRecipient": "awaiting user selection and encrypted handoff",
+    "temporaryAllowlistChange": "not performed; requires AIoT system administrator and a bounded cleanup plan",
+    "realDeliveryAndCodeVerification": "not yet passed"
+  },
+  "secretsIncluded": false
+}
