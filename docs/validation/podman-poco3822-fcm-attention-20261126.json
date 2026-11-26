@@ -1,0 +1,67 @@
+{
+  "schema": "woowtech.podman.poco3822-fcm-attention.v1",
+  "scope": "One artificial attention event from the formal Podman rc.23-1 installation to the original POCO woow.22 profile after fresh Android Home ready",
+  "runtime": {
+    "origin": "https://woowtechbot-openclaw.woowtech.io",
+    "version": "0.1.7-rc.23-1",
+    "imageId": "sha256:37164bef2109c2f5db1ff26ebbb092d66c541394d563c3aa5904e648b29a25ee",
+    "containerHealthy": true,
+    "publicHealthStatus": 200
+  },
+  "androidReady": {
+    "source": "Android parent; sole POCO operator",
+    "atUtc": "2026-11-26T16:42:58.785558Z",
+    "key": "poco3822-podman-background-20261126T164258785558Z",
+    "app": "woow.22/code3822",
+    "profile": "android-qa-podman",
+    "qaBotAndComposerSeen": true,
+    "homeConfirmedByTopResumedActivity": true,
+    "network": "WiFi, ordinary background, not cold"
+  },
+  "preflight": {
+    "atUtc": "2026-11-26T16:46:42.208Z",
+    "environmentId": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+    "clientSessionId": "e7a016cf-55ab-41a3-8b63-e4ff6cad6127",
+    "clientScopeAndExpiry": "client scope present; unexpired",
+    "serviceId": "21c51aff-99fc-46ec-a970-f75b96658059",
+    "registrationId": "b2da04c9-2149-4323-b433-113b69974ff3",
+    "revision": 1,
+    "deviceState": "registered",
+    "pendingPushJobs": 0,
+    "botId": "5f51f80d-afdb-4e44-b310-fc0798170a66",
+    "threadId": "7cb1b6b6-8ee0-4af2-8d83-787369ff75d6",
+    "botNotifications": true,
+    "botBusy": false,
+    "pushEnabledAndConfigured": true,
+    "paasIndependentRelayPreflightAtUtc": "2026-11-26T16:43:54.986Z",
+    "paasIndependentRelayLiveAndIdentityMatched": true,
+    "paasIndependentRelayPendingAndRetainedEvents": 0
+  },
+  "send": {
+    "eventId": "1b968be9-d970-410b-8ed0-e53f0a1eff2e",
+    "reason": "attention",
+    "kind": "artificial FCM relay fixture; not a natural model completion",
+    "sentAtUtc": "2026-11-26T16:46:42.213Z",
+    "expiresAtUtc": "2026-11-26T16:56:42.212Z",
+    "attempts": 1,
+    "retryPerformed": false,
+    "relayHttpStatus": 200,
+    "relayAckAtUtc": "2026-11-26T16:46:43.205Z",
+    "relayAckOk": true,
+    "relayAckRegistrationIdMatched": true,
+    "relayAckRevisionMatched": true
+  },
+  "androidAcceptance": {
+    "phoneReceipt": "pending Android parent verification",
+    "notificationBodyTapAndExactThread": "pending Android parent verification",
+    "relayAckIsPhoneDeliveryProof": false
+  },
+  "coordination": {
+    "androidParentSession": "ff9ee02365d04f45b296077c894a7a40",
+    "androidParentMessageAcceptedStatus": 202,
+    "otherSitesEventsHeld": true,
+    "podmanModelRequestsHeld": true,
+    "noNewPairingOrRevocation": true,
+    "secretsRecorded": false
+  }
+}
