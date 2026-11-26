@@ -42,6 +42,6 @@
     "recoveryPoint": "backup-20261126-051129 (cold backup, restore --verify-only passed before upgrade)",
     "localHealthProbe": "300 samples across backup and upgrade: 292 HTTP 200; 5 connection failures and 3 HTTP 502 during stop/start; final sample HTTP 200"
   },
-  "pendingSeparateAcceptance": "Native phone notification and true-model long-response tests require a connected device and logged-in model credentials.",
+  "separateAcceptance": "Native phone notification and Codex true-model long response passed on 2026-11-26; see podman-codex-phone-20261126.json. The OpenAI-compatible gateway with a real upstream remains a separate acceptance.",
   "phase4": "Cold backup and full restore subsequently completed on rc.22 in PR #5; see podman-rc22-backup-restore-20261126.json."
 }
