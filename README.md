@@ -229,7 +229,7 @@ scripts/restore.sh 備份目錄 --identity 私鑰檔 --with-secrets
 - 沒有 HA Supervisor 備份；改用本 repo 的冷備份與還原腳本（見上一節）。
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
-- 目前正式安裝的 rc.22-2 還沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。rc.23 候選已接上獨立 relay 設定與 Podman secret，但尚未換正式映像，也未完成真機離線收件。詳見 [候選驗證](docs/validation/podman-rc23-fcm-candidate-20261126.json)。
+- 目前正式站暫裝本機 `0.1.7-rc.23-0` 候選：它沿用 rc.22-2 的 Podman 底層、覆蓋已合併 HA PR #31 的 rc.23 應用程式，並接上獨立 relay 與 Podman secret。服務端真裝置註冊已由 relay 獨立核對；真機 FCM 實收仍待完成。HA rc.23 正式 OCI 映像尚未發布，此候選沒有可從 registry 拉取的 digest；發版時須改用正式映像、更新 pin 與 `VERSION`。詳見 [隔離驗證](docs/validation/podman-rc23-fcm-candidate-20261126.json)與[正式站候選部署](docs/validation/podman-rc23-local-candidate-deployed-20261126.json)。
 - 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
 - 上游 MausBot 的廣告（團隊方案、ModelGo、Boat 優惠等）和「公告」頁已拿掉，這是 PaaS 的修補 0016，HA 映像從 0.1.7-rc.20 起帶著。畫面上還有約一百處「MausBot」字樣，講的是手機 App、MausBot Cloud 和帳號等上游的東西，和 PaaS 一樣刻意保留。
 - HA rc.22 帶入 PaaS 修補 0017：頭像的十種通用輪廓、十種表情和黑白五官可切換；兩種編輯器不再列節慶款式，也不會自動裝扮。舊節慶 body ID 僅在畫面顯示通用機器人，原資料與上傳頭像保留。
