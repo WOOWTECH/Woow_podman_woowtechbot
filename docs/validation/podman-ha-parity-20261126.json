@@ -1,6 +1,6 @@
 {
   "marker": "HA-Podman-bidirectional-parity-20261126",
-  "observedAtTaipei": "2026-11-26T18:13:28+08:00",
+  "observedAtTaipei": "2026-11-26T18:18:25+08:00",
   "scope": "installed production Podman rc.22-2; comparisons to HA are reported handoff claims, not changes to HA",
   "instance": {
     "release": "0.1.7-rc.22-2",
@@ -210,7 +210,19 @@
       "postRestorePublicChecks": 20,
       "postRestorePublicFailures": 0,
       "finalBotCount": 2,
-      "finalSessionCount": 3
+      "finalSessionCount": 3,
+      "claudeOauthAfterColdRestore": {
+        "loggedIn": true,
+        "authMethod": "claude.ai",
+        "storedClaudeAiLogin": true
+      },
+      "codexAfterColdRestore": {
+        "loginStatus": "Logged in using ChatGPT",
+        "realRequestModel": "gpt-6.2-sol",
+        "realRequestReply": "CODEX-RESTORE-1126",
+        "turnCompleted": true,
+        "errorEvents": 0
+      }
     },
     "cockpitPairing": {
       "installedPageMatchesRepo": true,
@@ -284,7 +296,8 @@
       "restart-parity.json": "6bd2096a64cc1e71f85197180454f8d87e418c13fe0232f24cd7108bc7d439c0",
       "cold-restore-parity.json": "6bd2096a64cc1e71f85197180454f8d87e418c13fe0232f24cd7108bc7d439c0",
       "cleanup.json": "81f25d9369688a355b1b363cab7e206aee7e1532bdb808030c33dbd78c9d287c",
-      "receiver-cleanup.json": "fca14c224f6778d92715071205070e05eb6db94cd4539394d3f16207488a777f"
+      "receiver-cleanup.json": "fca14c224f6778d92715071205070e05eb6db94cd4539394d3f16207488a777f",
+      "codex-restore-events.jsonl": "a4b276c4298e530120588a48282fa481d13cf6f286c761b1ec1449887d0b282f"
     },
     "containsCredentialsOrOneTimeCodes": true,
     "notCommitted": true
