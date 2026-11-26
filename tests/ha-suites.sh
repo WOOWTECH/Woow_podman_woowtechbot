@@ -3,13 +3,15 @@
 # HA edition" is checked with the HA edition's tests and not with a copy of them. The add-on repo is
 # private; give the path of a checkout of the release this repo is pinned to. Not for CI.
 #
-#   tests/ha-suites.sh <ha-addon-checkout> [toolchain|published|signin ...]   (default: all three)
+#   tests/ha-suites.sh <ha-addon-checkout> [toolchain|published|signin|llm-gw ...] (default: all four)
 #
 #   toolchain   toolchain/tests: smoke, portability, sandbox-verify-tools
 #   published   scripts/test-candidate-published-apps.mjs in both modes: one address (legacy) and a
 #               separate WTB_PUBLISHED_URL (isolated), before and after a restart
 #   signin      scripts/test-candidate-signin.mjs: the email code flow over HTTPS against an
 #               in-container mail stand-in (four phases). Nothing is sent to anyone.
+#   llm-gw      the HA gateway tests, plus Podman settings, loopback binding, streaming, restart
+#               and failure propagation against a synthetic upstream with no external network
 #
 # Differences from the add-on's own runners, all on the Podman side: the settings go in as WTB_* and
 # root-only secret files through entry.cjs (no Supervisor writes options.json), podman replaces
@@ -27,11 +29,11 @@ export QL_LOG_PREFIX=ha-suites
 MEMORY=${WTB_TEST_MEMORY:-2g}
 
 ha=${1:-}
-[[ -n $ha && -f $ha/source.lock.json ]] || ql_die "usage: tests/ha-suites.sh <ha-addon-checkout> [toolchain|published|signin ...]"
+[[ -n $ha && -f $ha/source.lock.json ]] || ql_die "usage: tests/ha-suites.sh <ha-addon-checkout> [toolchain|published|signin|llm-gw ...]"
 ha=$(cd "$ha" && pwd -P)
 shift
 suites=("$@")
-((${#suites[@]})) || suites=(toolchain published signin)
+((${#suites[@]})) || suites=(toolchain published signin llm-gw)
 want=$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$ha/source.lock.json")
 [[ $WTB_BASE_TAG == *":$want" ]] || ql_die "the checkout is $want, this repo runs $WTB_BASE_TAG; check out the matching release"
 podman image exists "$WTB_IMAGE" || ql_die "$WTB_IMAGE is not built (run scripts/install.sh first)"
@@ -156,11 +158,67 @@ except Exception: print("no result")' "$work/signin-$phase.json" 2>/dev/null || 
   done
 }
 
+run_llm_gw() {
+  local rc phase _
+  local probe=/podman-tests/llm-gw.cjs
+  local -a mount=(--mount "type=bind,src=$REPO/tests,dst=/podman-tests,readonly")
+  # Check the actual image against the source used by HA's own tests; do not copy private code.
+  podman rm -f "$box" >/dev/null 2>&1 || :
+  rc=0
+  timeout 60 podman run --rm --name "$box" --network none --memory "$MEMORY" --memory-swap "$MEMORY" --cpus 2 \
+    --mount "type=bind,src=$ha/addon,dst=/ha-addon,readonly" --entrypoint sh "$WTB_IMAGE" \
+    -c 'cmp /ha-addon/llm-gw.mjs /opt/omb-addon/llm-gw.mjs && node --test /ha-addon/test-gateway.mjs' \
+    >"$work/llm-ha.log" 2>&1 || rc=$?
+  note "$rc" "llm-gw: image matches HA source and HA gateway tests pass"
+  ((rc == 0)) || { tail -5 "$work/llm-ha.log" >&2; return; }
+  mkdir -p "$work/llm-data" "$work/nosecrets"
+  if ! start_box "$work/llm-data" "$work/nosecrets" --network none "${mount[@]}"; then
+    note 1 "llm-gw: default container starts"; return
+  fi
+  rc=0
+  timeout 30 podman exec --user maus "$box" node "$probe" disabled >"$work/llm-disabled.log" 2>&1 || rc=$?
+  note "$rc" "llm-gw: off by default, application output limit is 32000"
+  ((rc == 0)) || { tail -5 "$work/llm-disabled.log" >&2; return; }
+  if ! start_box "$work/llm-data" "$work/nosecrets" --network none "${mount[@]}" \
+    -e WTB_LLM_GW_ENABLED=true -e WTB_LLM_GW_UPSTREAM=http://127.0.0.1:18092/prefix \
+    -e WTB_LLM_GW_MAX_TOKENS=1234; then
+    note 1 "llm-gw: enabled container starts"; return
+  fi
+  [[ -z $(podman port "$box") ]] && rc=0 || rc=1
+  note "$rc" "llm-gw: no container ports are published"
+  for phase in before after; do
+    if [[ $phase == after ]]; then
+      if ! { podman restart --time 30 "$box" >/dev/null && wait_ready; }; then
+        note 1 "llm-gw: restart"; return
+      fi
+    fi
+    rc=0
+    timeout 60 podman exec --user maus "$box" node "$probe" enabled >"$work/llm-$phase.log" 2>&1 || rc=$?
+    note "$rc" "llm-gw: limits, auth, paths, streaming, cancellation and errors ($phase restart)"
+    ((rc == 0)) || { tail -5 "$work/llm-$phase.log" >&2; return; }
+    tail -1 "$work/llm-$phase.log"
+  done
+  podman logs "$box" >"$work/llm-container.log" 2>&1
+  if grep -qE 'synthetic-gw-(key|prompt|query)' "$work/llm-container.log"; then rc=1; else rc=0; fi
+  note "$rc" "llm-gw: synthetic key, prompt and query are absent from container logs"
+  rc=0
+  timeout 10 podman exec --user maus "$box" node "$probe" kill || rc=$?
+  if ((rc == 0)); then
+    for _ in $(seq 1 35); do
+      [[ $(podman inspect --format '{{.State.Running}}' "$box") == true ]] || break
+      sleep 1
+    done
+    [[ $(podman inspect --format '{{.State.Running}} {{.State.ExitCode}}' "$box") == 'false 1' ]] || rc=1
+  fi
+  note "$rc" "llm-gw: gateway failure stops the container with exit 1"
+}
+
 for s in "${suites[@]}"; do
   case $s in
     toolchain) run_toolchain ;;
     published) run_published ;;
     signin) run_signin ;;
+    llm-gw) run_llm_gw ;;
     *) ql_die "unknown suite $s" ;;
   esac
 done

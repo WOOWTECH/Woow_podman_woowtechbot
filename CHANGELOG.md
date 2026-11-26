@@ -5,6 +5,11 @@ the revision of this repo's packaging on it.
 
 ## 0.1.7-rc.20-1 (unreleased)
 
+- Add the `llm-gw` acceptance suite: the matching HA gateway tests plus the real Podman entry point,
+  default-off behavior, configured limits, loopback binding, request forwarding, streaming,
+  cancellation, errors, restart, log redaction and container exit on gateway failure. Uses only a
+  synthetic upstream in isolated containers. README explains endpoint selection and the remaining
+  real-model acceptance; the installed bot's gateway remains off.
 - The base is now the HA add-on image 0.1.7-rc.20 (pinned by digest), up from rc.14. rc.19 took over the
   PaaS edition's rebrand: the woowtech bot icons, the name woowtechbot in page titles, the web manifest
   and the texts, and for a new install a chief of staff called woowtechbot instead of MausBot. rc.20 adds

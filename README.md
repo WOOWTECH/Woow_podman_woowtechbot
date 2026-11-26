@@ -157,6 +157,26 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 
 驗收：收件匣收到 8 碼驗證碼並成功登入一次；同一碼再用會被拒（401）。通過後才由管理員關掉測試模式。憑證最長 365 天，到期前要換發。
 
+## 選用的模型請求閘道（llm-gw）
+
+這是容器內的模型請求轉送程式，預設關閉。模型請求沒有指定輸出長度時，它會補上上限，避免上游服務採用過小的預設值而截斷回覆或工具參數。已指定的上限會照原樣轉送；`WTB_LLM_GW_MAX_TOKENS` 也會傳給應用程式的 OpenAI 相容模型驅動，預設是 32000。
+
+需要使用閘道時，在設定檔填入以下三項，再執行 `scripts/install.sh` 套用（會重啟 bot）：
+
+```ini
+WTB_LLM_GW_ENABLED=true
+WTB_LLM_GW_UPSTREAM=https://models.example.com
+WTB_LLM_GW_MAX_TOKENS=32000
+```
+
+接著到 bot 的模型供應商設定，把 OpenAI 相容端點設為 `http://127.0.0.1:8092/v1`，API key 仍填在模型供應商設定裡。啟用閘道不會自動更改現有模型連線。上限要符合所選模型的限制。
+
+- 上游網址不可包含帳密、查詢參數或 `#` 片段。若上游已填 `https://models.example.com/v1`，模型端點就填 `http://127.0.0.1:8092`，避免出現兩次 `/v1`。
+- 8092 只聽容器內的 loopback，不對主機或公開網址開放。這裡的 `127.0.0.1` 指 bot 容器；若模型服務跑在主機上，必須另外安排容器能到達的位址。
+- 停用前，先把模型供應商端點改回可連線的上游，再設 `WTB_LLM_GW_ENABLED=false` 並重新套用。
+
+`tests/ha-suites.sh <HA 外掛的 checkout> llm-gw` 以同版本 HA 測試及隔離容器內的模擬上游，驗證預設停用、設定傳入、輸出上限、授權與路徑轉送、串流、中斷取消、錯誤回傳、重啟及閘道故障時容器退出。測試不連外、不使用正式模型金鑰；真正模型的長回覆與長工具參數仍需另外驗收。
+
 ## 圖示
 
 網頁版用 woowtech bot 圖示（藍底機器人），和 PaaS 相同：瀏覽器分頁、「關於」視窗、設定頁，以及加到手機主畫面後的圖示和打開畫面。產品名稱也是 woowtechbot，新安裝的幕僚長就叫 woowtechbot。這是 HA 外掛映像從 0.1.7-rc.19 起的樣子，它採用了 PaaS 的整套品牌修改（rc.14 還是 MausBot 的圖示和名稱）。建置時會檢查圖示和 PaaS 的檔案逐位元相同，不同就停下；檔案副本在 `image/brand`。圖示網址會加上 `?v=<雜湊>`，Cloudflare 和瀏覽器不會再拿出舊圖。
@@ -195,7 +215,7 @@ podman exec --user maus -e HOME=/data woowtechbot openmausbot access remove 信�
 
 - `node --test tests/*.test.cjs`、`tests/dryrun.local.sh`：不需要映像，CI 每次都跑。
 - `tests/smoke.sh`：安裝後在主機上跑，檢查服務、開放的埠、設定與密鑰的權限、資源上限、網頁圖示、配對碼只能用一次、配對碼不進日誌。會產生並用掉一組配對碼，最後清乾淨。
-- `tests/ha-suites.sh <HA 外掛的 checkout>`：拿同一版 HA 外掛自己的測試來跑 Podman 映像（工具、發布網站兩種模式、Email 登入），不另外抄一份。
+- `tests/ha-suites.sh <HA 外掛的 checkout>`：拿同一版 HA 外掛自己的測試來跑 Podman 映像（工具、發布網站兩種模式、Email 登入、llm-gw），不另外抄一份。可在後面指定 `toolchain`、`published`、`signin` 或 `llm-gw`，只跑其中一項。
 - `tests/public.sh`：用本機的 TLS 替身試跑 `check-public.sh`，也確認它會擋下接錯的設定。
 - `tests/runtime.sh`：用一個用完即丟、沒有網路的容器，跑 HA 外掛的執行期檢查（Odoo MCP 唯讀閘道、未配對與假冒 HA 入口的請求被拒、引擎版本），不影響已安裝的 bot。
 
