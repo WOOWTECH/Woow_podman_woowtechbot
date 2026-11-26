@@ -93,6 +93,19 @@
     "phoneAppServiceIdAndStateConfirmed": false,
     "phoneFcmReceived": false
   },
+  "currentPhoneAcceptanceHold": {
+    "recordedAtUtc": "2026-11-26T15:22:25Z",
+    "reason": "Android is aligning the original POCO's non-store App with integrated preview 06 UI/UX, light and dark themes, and interactions",
+    "oldHomeReadyMayResumeTests": false,
+    "newPerSiteReadyRequired": true,
+    "artificialNotificationsHeld": true,
+    "naturalModelRequestsHeld": true,
+    "pairingCodesGenerated": false,
+    "existingBindingsRevoked": false,
+    "serverRegistrationStillLive": true,
+    "pendingPushJobs": 0,
+    "nativeNotificationPagePendingRegistrationOrRemovalTextResolved": false
+  },
   "limits": [
     "The deployed candidate uses a local digest and a previous Podman base; replace it with the immutable official HA rc23 image before a normal Podman release.",
     "The formal client session capability response was not observed because no existing phone cookie or token was read or copied; enabled and secret loading were checked in private runtime options.",
