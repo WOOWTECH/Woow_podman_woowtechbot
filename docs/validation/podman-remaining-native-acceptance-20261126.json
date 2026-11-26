@@ -1,0 +1,72 @@
+{
+  "schema": "woowtech.podman.remaining-native-acceptance.v1",
+  "checkedAtUtc": "2026-11-26T22:05:30.644Z",
+  "origin": "https://woowtechbot-openclaw.woowtech.io",
+  "serverVersion": "0.1.7-rc.23-1",
+  "androidApp": "original POCO normal woow.22/code3822 source 0a78edb2",
+  "qaTarget": {
+    "botId": "5f51f80d-afdb-4e44-b310-fc0798170a66",
+    "mainThreadId": "7cb1b6b6-8ee0-4af2-8d83-787369ff75d6",
+    "originalClientAndRegistrationPreserved": true,
+    "mainThreadMessageCountAt2026-11-26T22:03:53Z": 29,
+    "mainThreadQuestionLikeMessageKinds": 0,
+    "mainThreadAttachmentReferences": 0
+  },
+  "completed": [
+    {
+      "area": "corrected-source no-process artificial attention FCM wake, body tap and main thread",
+      "status": "pass",
+      "evidence": "podman-poco3822-source0a78edb2-cold-attention-20261126.json"
+    },
+    {
+      "area": "corrected-source natural guarded model finished FCM, body tap and main thread",
+      "status": "pass for model completion and FCM transport/navigation; fail for exact marker adherence",
+      "evidence": "podman-poco3822-source0a78edb2-natural-20261126.json"
+    },
+    {
+      "area": "formal production email send and real inbox receipt",
+      "status": "pass for delivery; OTP verification not completed",
+      "evidence": "podman-formal-email-20261126.json"
+    }
+  ],
+  "remaining": [
+    {
+      "area": "formal email OTP verification and authenticated session",
+      "status": "needs a fresh single-use code and a new narrowly scoped QA recipient window",
+      "readyMaterial": "Private Chromium public-login harness is prepared; the original QA member and mail allowlist were cleaned after the expired code",
+      "doNotAssume": "Email receipt is not login verification"
+    },
+    {
+      "area": "Cockpit administrator page QR and code controls",
+      "status": "blocked on a real administrator browser login",
+      "readyMaterial": "Private Playwright harness syntax checked; it requires a 0600 administrator password file and aborts if a pending code already exists",
+      "doNotAssume": "A loaded Cockpit login page or pairing backend test is not an authenticated administrator click"
+    },
+    {
+      "area": "physical Android camera scan of a fresh QR invite",
+      "status": "pending Android parent coordination",
+      "readyMaterial": "Original Podman profile and registration are preserved; a short-lived client-only invite should be generated only after the Android parent declares its scan form ready",
+      "doNotAssume": "QR decode or typed pairing is not a physical camera scan"
+    },
+    {
+      "area": "native question card touch, lock and return",
+      "status": "pending a harmless QA-only question card fixture and Android parent readiness",
+      "readyMaterial": "No question-like message kind was observed in the existing QA main conversation; a dedicated harmless fixture has not been established",
+      "doNotAssume": "Backend card validation is not a phone touch result"
+    },
+    {
+      "area": "native system file selection, camera capture and attachment opening",
+      "status": "pending a harmless QA-only attachment fixture and Android parent readiness",
+      "readyMaterial": "Existing QA main conversation has no attachment reference; previous public download evidence can be reused only as server-side evidence",
+      "doNotAssume": "Public HTTP download is not a native picker or camera test"
+    },
+    {
+      "area": "Podman FCM during disconnected network and after mobile-data handover",
+      "status": "pending an Android parent controlled network sequence and a separately authorized single event per condition",
+      "readyMaterial": "Exact service, client and registration were live after the latest phone tap; current successful tests used WiFi",
+      "doNotAssume": "A no-process WiFi wake is not an offline or cellular acceptance"
+    }
+  ],
+  "executionBoundary": "All additional model requests, pairing invites and notification events are held until a new per-test Android parent ready or an authenticated Cockpit session is available.",
+  "secretsRecorded": false
+}
