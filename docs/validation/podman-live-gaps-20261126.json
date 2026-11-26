@@ -1,0 +1,103 @@
+{
+  "marker": "Podman-live-gap-retest-20261126",
+  "observedAtTaipei": "2026-11-26T19:44:23+08:00",
+  "scope": "Installed production Podman instance, with temporary test bot and recipient access removed after use",
+  "instance": {
+    "release": "0.1.7-rc.22-2",
+    "imageRef": "localhost/woowtechbot-podman:0.1.7-rc.22-2",
+    "imageId": "sha256:473ae67af704d6fecba22f9bb4cb5dcf5ba08ec256b8694913bc621551aac746",
+    "localRepoDigest": "sha256:24fa7fd372c78d98cd43ca0020ea6a43c8ef2ee7814ef03a9f9d673f82fc66de",
+    "haBaseIndexDigest": "sha256:10ef3f1fd69f55359dcdfa6d60e3818cd2d4bdab8da684a09b66c5ed47f8d4fc",
+    "environmentIdFromOwnerLoopback": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+    "publicOrigin": "https://woowtechbot-openclaw.woowtech.io"
+  },
+  "checks": {
+    "realBotThroughGatewayAfterColdRestore": {
+      "status": "passed",
+      "gatewayHealthHttp": 200,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "responseCharacters": 1126,
+      "numberedParts": 20,
+      "endMarker": "GATEWAY-PODMAN-1126",
+      "durationMilliseconds": 45967,
+      "temporaryBotDeleted": true,
+      "originalBotCountAfter": 2,
+      "privateReportSha256": "b8636f18988c17e3367a17fe523b87a2cac37e04320da5960907afda6b2736a2"
+    },
+    "realGatewayLargeToolArguments": {
+      "status": "passed",
+      "model": "openai/gpt-6-sol",
+      "gatewayHttp": 200,
+      "streamChunks": 15994,
+      "finishReason": "tool_calls",
+      "argumentCharacters": 19963,
+      "argumentJsonValid": true,
+      "sequentialRecords": 100,
+      "minimumRecordTextCharacters": 169,
+      "endMarker": "END-100",
+      "requestOmittedMaxTokens": true,
+      "durationMilliseconds": 112695,
+      "privateReportSha256": "194bf7f8be44870a9fa75d1ff5cef8341fdca3c6d52e17d34d36ea02db55763f"
+    },
+    "formalEmailDelivery": {
+      "status": "failed_upstream_restriction",
+      "publicBrowser": "Chromium",
+      "publicSendCodeHttp": 502,
+      "directRelayHttp": 403,
+      "relayError": "recipient_not_allowed",
+      "codeEntryShown": false,
+      "uiErrorText": "502",
+      "temporaryRecipientAccessRemoved": true,
+      "actualEmailReceived": false,
+      "privateBrowserReportSha256": "5097410b2ce56594c839ad96f7f8fc70a49bd29f8eaaadbc425d6b98e47eaa9e"
+    },
+    "cockpitAdminPage": {
+      "status": "blocked_at_authentication",
+      "browser": "Chromium",
+      "url": "https://127.0.0.1:9090/woowtechbot",
+      "loginFormShown": true,
+      "authenticatedPageClickTested": false,
+      "reason": "No authenticated Cockpit admin browser session; login requires the server user's password"
+    },
+    "nativePixelTablet": {
+      "status": "blocked_at_device_lock",
+      "mikaDeviceLocked": true,
+      "mikaRemoteUnlockResult": "unsupported_keyguard",
+      "adbDevices": 0,
+      "wirelessAdbResult": "connection_refused",
+      "notificationTapToConversationTested": false,
+      "questionCardTapTested": false,
+      "lockScreenReturnTested": false,
+      "nativeAttachmentOpenTested": false,
+      "cameraQrScanTested": false
+    },
+    "cellularNetworkSwitch": {
+      "status": "blocked_by_hardware",
+      "pixelTabletSupportsCellular": false,
+      "simEnabledPhoneAvailable": false,
+      "realWifiToMobileNetworkSwitchTested": false
+    },
+    "offlineFcm": {
+      "status": "not_deployed",
+      "existingReleaseHasFcmIntegration": false,
+      "pushEnabled": false,
+      "candidateImageTag": null,
+      "candidateImageDigest": null,
+      "realOfflinePushReceived": false,
+      "podmanDedicatedInstallationIdentityPrepared": true,
+      "receiptPublicKeyDerSha256": "e19ad26c1155f1c2c84c2d6220c4c75e9cf4845b371d13fd8c893873119fa66c",
+      "woowtechIoApexDnsResolved": false,
+      "aiotSubdomainHttpsHttp": 200,
+      "paasSubdomainHttpsHttp": 401,
+      "relayHostnameReachability": "pending_actual_hostname"
+    }
+  },
+  "requiredNextInputs": [
+    "Physically unlock Pixel Tablet and allow Mika or ADB access",
+    "Use a SIM enabled Android phone for cellular switch acceptance",
+    "Provide an authenticated Cockpit admin browser session",
+    "Remove the upstream email recipient restriction for the test mailbox",
+    "Deliver a dedicated Podman FCM image, HTTPS relay hostname, and RSA encrypted installation credential"
+  ],
+  "secretsIncluded": false
+}
