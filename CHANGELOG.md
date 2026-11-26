@@ -3,7 +3,29 @@
 Versions are `<HA add-on version>-<Podman revision>`: the HA add-on image the edition runs, and
 the revision of this repo's packaging on it.
 
-## 0.1.7-rc.20-1 (unreleased)
+## 0.1.7-rc.22-2 (unreleased)
+
+- Cold `scripts/backup.sh` stops the bot, exports the data volume and settings into a private,
+  checksummed directory, then starts it again. `--age-recipient` encrypts the volume and settings
+  and includes encrypted Podman secrets for recovery on another host. No secret plaintext is
+  written to a backup file.
+- `scripts/restore.sh` checks checksums, the archive paths and the HA image pin before stopping
+  anything. It retains a pre-restore backup, imports the saved volume and settings, optionally
+  restores age-encrypted secrets, runs the installer and smoke checks, and attempts to roll back
+  on failure. `--verify-only` checks an archive without touching the service.
+- Real Podman volume round trips with SQLite, symlinks and a synthetic encrypted secret; malformed
+  archives and changed checksums are rejected. The live N100 completed a cold backup and full
+  restore on the HA rc.22 image, with its existing bots and sessions intact.
+
+## 0.1.7-rc.22-1 (2026-11-26)
+
+- Use the HA rc.22 image pinned by OCI index, bringing PaaS avatar patch 0017 to Podman: ten common
+  bodies, ten expressions and black/white face controls, with old festival IDs safely rendered as
+  a generic robot. Both editors, saved state and uploaded avatars were checked in a real browser.
+- Accept and preserve the HA image's per-file content hashes for icons and the web manifest.
+- See `docs/validation/podman-rc22-avatar-20261126.json` for installed-instance acceptance.
+
+## 0.1.7-rc.20-1 (2026-11-26)
 
 - Add the `llm-gw` acceptance suite: the matching HA gateway tests plus the real Podman entry point,
   default-off behavior, configured limits, loopback binding, request forwarding, streaming,

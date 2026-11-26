@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3），手機 App 的配對、聊天、附件上下傳、背景返回與短暫斷線也已在 Pixel Tablet 上實測；Cockpit 管理頁已安裝在這台主機並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；手機通知尚未實測；備份在後續階段。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3），手機 App 的配對、聊天、附件上下傳、背景返回與短暫斷線也已在 Pixel Tablet 上實測；Cockpit 管理頁已安裝在這台主機並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原已在實機驗證（2026-11-26）；手機通知尚未實測。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 
@@ -192,6 +192,28 @@ WTB_LLM_GW_MAX_TOKENS=32000
 
 網頁版沒有手機通知，也不能讓 bot 操作手機，這兩件事要用 App。以前就加到主畫面的，圖示可能要過一陣子才會更新；想馬上換，就從主畫面移除再加一次。
 
+## 冷備份與還原
+
+```bash
+scripts/backup.sh                                  # 短暫停止 bot；備份資料與設定，再啟動
+scripts/restore.sh 備份目錄 --verify-only            # 驗證校驗值與資料檔，不停止 bot
+scripts/restore.sh 備份目錄                          # 還原前輸入 woowtechbot 確認
+```
+
+備份會放在 `~/.local/share/woow-backups/woowtechbot/backup-<時間>/`，包含資料磁碟匯出、設定檔、版本資訊和 SHA-256 校驗值。資料磁碟有 bot、對話、附件、模型登入與裝置登入狀態，所以目錄設為 0700、檔案設為 0600，搬到別處時也要保持私密。備份時會停止 bot，避免 SQLite 等檔案在寫入中被複製；若原本是執行中，完成後會啟動並檢查健康。備份不自動刪除。
+
+一般備份不包含 Podman 密鑰，適合同一台主機還原，既有密鑰會保留。如果要帶到另一台主機、連公司代寄信和通道密鑰也一起還原，先用 `age-keygen -o 私鑰檔` 建立密鑰組，妥善保管私鑰，然後用 `age-keygen -y 私鑰檔` 取得公鑰：
+
+```bash
+scripts/backup.sh --age-recipient age1...              # 資料、設定、Podman 密鑰皆加密
+scripts/restore.sh 備份目錄 --identity 私鑰檔 --verify-only
+scripts/restore.sh 備份目錄 --identity 私鑰檔 --with-secrets
+```
+
+私鑰要另外保存；遺失後無法解開加密備份。密鑰內容透過管線加密，備份目錄不會出現密鑰明文。若不選 `--with-secrets`，還原時保留目前主機上的密鑰。搬到另一台主機時，先取得與備份相同的 HA 映像版本、執行 `scripts/install.sh --gh-auth` 安裝，再還原；外部 DNS 與 Cloudflare 路由需另外指向新主機。還原可接受同一個 HA 映像的不同 Podman 修訂版，不會自動跨 HA 映像版本還原。
+
+還原會先校驗，再停止 bot，另存一份 `pre-restore-<時間>/`，接著匯入資料、設定並重啟驗收。失敗會嘗試從這份舊資料自動回退；請保留它，直到確認服務與資料正常。`scripts/uninstall.sh --purge` 仍使用舊式的最後資料卷匯出，不包含 Podman 密鑰；要完整保存密鑰，請先做加密冷備份。
+
 ## 更新與移除
 
 - 更新：拉新版本的 repo 後執行 `scripts/install.sh`。舊版的本機映像會保留，方便退回。
@@ -200,7 +222,7 @@ WTB_LLM_GW_MAX_TOKENS=32000
 ## 已知限制
 
 - 沒有 HA 側邊欄，也沒有 HA 管理員驗證；改由主機帳號與 Cockpit 管理員群組決定誰是管理員（見「Cockpit 管理頁」）。
-- 沒有 HA Supervisor 備份；備份與還原腳本在後續階段提供。
+- 沒有 HA Supervisor 備份；改用本 repo 的冷備份與還原腳本（見上一節）。
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
 - 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
@@ -219,6 +241,7 @@ WTB_LLM_GW_MAX_TOKENS=32000
 - `tests/ha-suites.sh <HA 外掛的 checkout>`：拿同一版 HA 外掛自己的測試來跑 Podman 映像（工具、發布網站兩種模式、Email 登入、llm-gw），不另外抄一份。可在後面指定 `toolchain`、`published`、`signin` 或 `llm-gw`，只跑其中一項。
 - `tests/public.sh`：用本機的 TLS 替身試跑 `check-public.sh`，也確認它會擋下接錯的設定。
 - `tests/runtime.sh`：用一個用完即丟、沒有網路的容器，跑 HA 外掛的執行期檢查（Odoo MCP 唯讀閘道、未配對與假冒 HA 入口的請求被拒、引擎版本），不影響已安裝的 bot。
+- `tests/backup-restore.sh`：用拋棄式 Podman 資料卷測試明文／加密備份、SQLite、連結、合成密鑰、匯入與校驗拒絕；不碰正式資料卷。CI 另測危險 tar 路徑的拒絕。
 
 ## 與其他版本對照
 
@@ -228,7 +251,7 @@ WTB_LLM_GW_MAX_TOKENS=32000
 | 管理入口 | HA 側邊欄 | PaaS 服務設定頁 | 主機指令、Cockpit 管理頁 |
 | 對外網址 | CF Web GUI＋Security Access | 平台自動建立 | 主機上的 Cloudflare Tunnel＋Security Access |
 | 資源 | 共用主機，不設上限 | 4 CPU／8 GiB，5 個對話 | 預設 2 核／4 GiB，3 個對話 |
-| 備份 | HA 冷備份 | 刪除後保留 7 天 | 套件備份與還原（後續階段） |
+| 備份 | HA 冷備份 | 刪除後保留 7 天 | 冷備份與還原；可用 age 加密並包含 Podman 密鑰 |
 | 網頁圖示與名稱 | woowtech bot（rc.19 起） | woowtech bot | woowtech bot（來自 HA 映像） |
 
 ## 授權
