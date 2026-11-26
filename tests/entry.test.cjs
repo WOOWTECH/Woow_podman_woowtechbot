@@ -10,6 +10,10 @@ const ADDON = path.join(__dirname, 'fixtures', 'addon');
 const entry = require('../image/rootfs/opt/woowtechbot-podman/entry.cjs');
 const { ConfigError } = entry;
 
+const made = [];
+function tmpdir(prefix) { const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix)); made.push(dir); return dir; }
+test.after(() => { for (const dir of made) fs.rmSync(dir, { recursive: true, force: true }); });
+
 const noSecrets = () => '';
 // Built from parts so the repo's credential scan does not flag this fake token.
 const TOKEN = ['wtbha1', '12345678-1234-1234-1234-123456789abc', 'A'.repeat(43)].join('.');
@@ -75,6 +79,16 @@ test('turns: default 3, auto, a range check', () => {
   assert.throws(() => entry.turnsMaxRunning({ WTB_TURNS_MAX_RUNNING: '65' }), ConfigError);
 });
 
+test('the server name: empty keeps the app default, a name is passed on, bad ones are refused', () => {
+  assert.equal(entry.serverName({}), '');
+  assert.equal(entry.serverName({ WTB_SERVER_NAME: '  woowtechbot-家裡  ' }), 'woowtechbot-家裡');
+  assert.equal(entry.addonEnvironment({}, '3', 'my-bot').OMB_SERVER_NAME, 'my-bot');
+  assert.equal(entry.addonEnvironment({}, '3').OMB_SERVER_NAME, undefined);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'x'.repeat(65) }), ConfigError);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'a\nb' }), ConfigError);
+  assert.throws(() => entry.serverName({ WTB_SERVER_NAME: 'a\tb' }), ConfigError);
+});
+
 test('the add-on gets no WTB_ or WOOW_WTB_ variables, and the turn limit', () => {
   const env = entry.addonEnvironment({ WTB_PUBLIC_URL: 'x', WOOW_WTB_PORT: '1', TZ: 'Asia/Taipei', OMB_X: '1' }, '3');
   assert.deepEqual(env, { TZ: 'Asia/Taipei', OMB_X: '1', OMB_TURNS_MAX_RUNNING: '3' });
@@ -92,14 +106,14 @@ test('the add-on validators run and name the setting', () => {
 });
 
 test('secrets: missing is empty, one trailing newline is dropped', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-secrets-'));
+  const dir = tmpdir('wtb-secrets-');
   fs.writeFileSync(path.join(dir, 'woowtechbot-signin-relay-token'), TOKEN + '\n');
   assert.equal(entry.readSecret('woowtechbot-signin-relay-token', dir), TOKEN);
   assert.equal(entry.readSecret('woowtechbot-apporo-odoo-mcp-url', dir), '');
 });
 
 test('options go to the run dir with mode 0600 and /data/options.json links to them', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-write-'));
+  const root = tmpdir('wtb-write-');
   const runDir = path.join(root, 'run'), dataDir = path.join(root, 'data');
   fs.mkdirSync(dataDir);
   fs.writeFileSync(path.join(dataDir, 'options.json'), '{"old":true}');
@@ -114,7 +128,7 @@ test('options go to the run dir with mode 0600 and /data/options.json links to t
 });
 
 test('credentials are written to a tmpfs only', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-tmpfs-'));
+  const dir = tmpdir('wtb-tmpfs-');
   const real = fs.realpathSync(dir);
   entry.assertTmpfs(dir, `tmpfs ${real} tmpfs rw 0 0\n`);
   assert.throws(() => entry.assertTmpfs(dir, `/dev/sda1 ${real} ext4 rw 0 0\n`), ConfigError);
@@ -122,7 +136,7 @@ test('credentials are written to a tmpfs only', () => {
 
 test('--check exits 78 with the setting names, before anything is written', () => {
   const { spawnSync } = require('node:child_process');
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wtb-check-'));
+  const root = tmpdir('wtb-check-');
   const env = { PATH: process.env.PATH, WTB_ADDON_DIR: ADDON, WTB_SECRETS_DIR: root, WTB_RUN_DIR: path.join(root, 'run'),
     WTB_DATA_DIR: root, WTB_LLM_GW_MAX_TOKENS: 'many' };
   const bad = spawnSync(process.execPath, [require.resolve('../image/rootfs/opt/woowtechbot-podman/entry.cjs'), '--check'], { env, encoding: 'utf8' });

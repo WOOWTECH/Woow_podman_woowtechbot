@@ -30,6 +30,23 @@ check "the four optional secrets are root-only mounts" bash -c \
   "[[ \$(grep -cE '^Secret=woowtechbot-[a-z-]+,type=mount,uid=0,gid=0,mode=0400$' '$WORK/fixture-secrets/out/$unit') == 4 ]]"
 check "the base image is pinned by digest" grep -qE '^WTB_BASE_IMAGE=ghcr\.io/woowtech/amd64-woowtechbot@sha256:[0-9a-f]{64}$' "$REPO/scripts/common.sh"
 
+# The optional tunnel connectors (quadlet/optional, rendered in the example+optional variant).
+opt=example+optional
+for t in woowtechbot-tunnel woowtechbot-apps-tunnel; do
+  check "$t: only its own token, readable by the image's user only" bash -c \
+    "[[ \$(grep -c '^Secret=' '$WORK/$opt/out/$t.container') == 1 ]] && grep -qxF 'Secret=$t-token,type=mount,uid=65532,gid=65532,mode=0400' '$WORK/$opt/out/$t.container'"
+  check "$t: publishes nothing and stays off the host network" no_match $opt $t.container '^(PublishPort=|Network=host)'
+  check "$t: joins the bot's private network" has_line $opt $t.container 'Network=woowtechbot.network'
+  check "$t: read-only, no new privileges, no capabilities" bash -c \
+    "grep -qx 'ReadOnly=true' '$WORK/$opt/out/$t.container' && grep -qx 'NoNewPrivileges=true' '$WORK/$opt/out/$t.container' && grep -qx 'DropCapability=all' '$WORK/$opt/out/$t.container'"
+  check "$t: the metrics port is loopback only" has_line $opt $t.container \
+    "Exec=tunnel --metrics 127.0.0.1:20241 run --token-file /run/secrets/$t-token"
+  check "$t: the image is pinned by digest" bash -c \
+    "grep -qE '^Image=docker\.io/cloudflare/cloudflared:[0-9.]+@sha256:[0-9a-f]{64}$' '$WORK/$opt/out/$t.container'"
+done
+check "the bot's container never mounts a tunnel token" bash -c "! grep -hE 'tunnel-token' '$WORK'/*/out/$unit"
+check "without a tunnel token no connector is rendered" bash -c "! ls '$WORK'/example/out/*tunnel* >/dev/null 2>&1"
+
 # Invalid knobs must stop the render before any file is written.
 bad_env() { # bad_env <name> <sed expression>
   sed -e "$2" "$REPO/config/woowtechbot.env.example" >"$WORK/bad-$1.env"

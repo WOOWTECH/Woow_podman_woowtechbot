@@ -84,6 +84,10 @@ wtb_check_settings() {
   for s in "${WTB_SECRETS[@]}"; do
     if podman secret exists "$s"; then args+=(--secret "$s,type=mount,uid=0,gid=0,mode=0400"); fi
   done
+  # A dry run does not write the --set values to the env file; the check must see them all the same.
+  if ((dry)); then
+    for s in "${sets[@]}"; do args+=(-e "$s"); done
+  fi
   podman run "${args[@]}" "$WTB_IMAGE" node /opt/woowtechbot-podman/entry.cjs --check >/dev/null \
     || ql_die "the settings were refused (see the lines above); nothing was installed"
 }
@@ -119,6 +123,12 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/$APP-install.XXXXXX")
 ql_cleanup work rm -rf "$WORK"
 mkdir -p "$WORK/src" "$WORK/out"
 cp -p "$REPO"/quadlet/*.container "$REPO"/quadlet/*.volume "$REPO"/quadlet/*.network "$WORK/src/"
+tunnels=()
+for t in "${WTB_TUNNELS[@]}"; do
+  podman secret exists "$t-token" || continue
+  cp -p "$REPO/quadlet/optional/$t.container" "$WORK/src/"
+  tunnels+=("$t")
+done
 RENDER_ARGS=()
 # shellcheck source=render-args.sh
 . "$REPO/scripts/render-args.sh"
@@ -147,6 +157,8 @@ else
   ql_die "$WTB_IMAGE is missing after the build"
 fi
 
+if ((${#tunnels[@]})) && [[ $dry != 1 ]]; then ql_pull_images "$WORK/out"; fi
+
 # ---- 6. install changed files, then start / restart only what changed --------------------------
 changed=$(ql_install_files "$WORK/out" "$APP" --prune)
 [[ -z $changed ]] || ql_info "changed: $(tr '\n' ' ' <<<"$changed")"
@@ -164,13 +176,18 @@ if ((no_start)); then
   ql_info "installed; not started (--no-start). Start with: systemctl --user start woowtechbot.service"
   exit 0
 fi
-ql_apply_units "$APP" woowtechbot.service
+ql_apply_units "$APP" woowtechbot.service "${tunnels[@]/%/.service}"
 
 # ---- 7. health --------------------------------------------------------------------------------
 app_wait_healthy woowtechbot 300 woowtechbot.service
 host=$(app_local_host "$bind")
 ql_wait_http "http://$host:$port/api/health" '200' 120 || ql_die "the entrance does not answer on $host:$port"
 app_env_record
+for t in "${tunnels[@]}"; do
+  # A wrong or revoked token is the tunnel's problem, not the bot's: report it, keep the bot running.
+  ql_wait_container_healthy "$t" 90 \
+    || ql_warn "$t has no Cloudflare connection yet (check the token with scripts/secret.sh; journalctl --user -u $t.service -n 30)"
+done
 
 public=$(ql_env_get WTB_PUBLIC_URL)
 cat >&2 <<EOF

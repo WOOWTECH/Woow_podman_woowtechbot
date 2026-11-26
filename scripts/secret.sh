@@ -12,9 +12,12 @@
 #          signin-access-client-secret   Cloudflare Access client secret for that relay (optional)
 #          apporo-odoo-mcp-url           Apporo Odoo read-only MCP private URL (optional)
 #          woow-prod-odoo-mcp-url        woow_prod Odoo read-only MCP private URL (optional)
+#          tunnel-token                  Cloudflare Tunnel token for the bot's own connector (optional)
+#          apps-tunnel-token             the same for a separate published-site tunnel (optional)
 #
 # Then run scripts/install.sh again: it mounts the secrets that exist, checks them and restarts
-# woowtechbot.
+# woowtechbot. A tunnel token goes to its connector only, never to the bot: install.sh starts the
+# connector when the token is set and removes it when it is cleared, without restarting the bot.
 # shellcheck source-path=SCRIPTDIR
 set -euo pipefail
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
@@ -23,7 +26,7 @@ REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 # shellcheck source=common.sh
 . "$REPO/scripts/common.sh"
 
-usage() { sed -n '2,20p' "$0"; }
+usage() { sed -n '2,23p' "$0"; }
 command=${1:-}
 name=${2:-}
 case $command in
@@ -34,14 +37,14 @@ esac
 ql_require_rootless
 
 if [[ $command == list ]]; then
-  for s in "${WTB_SECRETS[@]}"; do
+  for s in "${WTB_SECRETS[@]}" "${WTB_TUNNEL_SECRETS[@]}"; do
     if podman secret exists "$s"; then printf 'set    %s\n' "${s#woowtechbot-}"; else printf 'unset  %s\n' "${s#woowtechbot-}"; fi
   done
   exit 0
 fi
 
 secret=woowtechbot-$name
-printf '%s\n' "${WTB_SECRETS[@]}" | grep -qxF -- "$secret" || ql_die "unknown secret name '$name' (see --help)"
+printf '%s\n' "${WTB_SECRETS[@]}" "${WTB_TUNNEL_SECRETS[@]}" | grep -qxF -- "$secret" || ql_die "unknown secret name '$name' (see --help)"
 ql_lock "$APP"
 if [[ $command == clear ]]; then
   if podman secret exists "$secret"; then
@@ -60,6 +63,12 @@ else
   fi
   [[ -n $value ]] || ql_die "empty value; nothing was changed"
   case $name in
+    tunnel-token | apps-tunnel-token)
+      # A pasted "cloudflared service install <token>" command is fine too: keep the token only.
+      [[ $value =~ (eyJ[A-Za-z0-9+/_=-]{60,}) ]] || ql_die "that is not a Cloudflare Tunnel token; nothing was changed"
+      value=${BASH_REMATCH[1]}
+      printf '%s' "$value" | base64 -d 2>/dev/null | grep -qE '"t":"[0-9a-f-]{36}"' \
+        || ql_die "that is not a Cloudflare Tunnel token; nothing was changed" ;;
     signin-relay-token)
       [[ $value =~ ^(wtb1|wtbha1)\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[A-Za-z0-9_-]{43}$ ]] \
         || ql_die "that is not a sign-in relay token (expected wtbha1.<id>.<key>); nothing was changed" ;;
@@ -75,6 +84,11 @@ else
   ql_secret_ensure "$secret" env:WTB_SECRET_VALUE --update
   unset WTB_SECRET_VALUE
 fi
-# The unit may not change (the Secret= line can already be there), so ask for the restart.
-if [[ -d $(app_state_dir) ]]; then ql_mark_changed "$APP" woowtechbot.service; fi
+# The unit may not change (the Secret= line can already be there), so ask for the restart: of the
+# connector for a tunnel token, when it is installed, and of the bot for everything else.
+unit=woowtechbot.service
+case $name in tunnel-token | apps-tunnel-token) unit=${secret%-token}.service ;; esac
+if [[ -f $(app_state_dir)/manifest ]] && { [[ $unit == woowtechbot.service ]] || { [[ $command == set ]] && grep -q "/${unit%.service}.container$" "$(app_state_dir)/manifest"; }; }; then
+  ql_mark_changed "$APP" "$unit"
+fi
 ql_info "run scripts/install.sh to apply it"

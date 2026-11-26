@@ -45,9 +45,9 @@ if ((purge)); then
   fi
   ql_uninstall_units "$APP" --purge
   if [[ ${QL_DRY_RUN:-0} == 1 ]]; then
-    ql_info "[dry-run] --purge would also remove the podman secrets ${WTB_SECRETS[*]} and $HOME/.config/$APP"
+    ql_info "[dry-run] --purge would also remove the podman secrets ${WTB_SECRETS[*]} ${WTB_TUNNEL_SECRETS[*]} and $HOME/.config/$APP"
   else
-    for s in "${WTB_SECRETS[@]}"; do podman secret rm "$s" >/dev/null 2>&1 || true; done
+    for s in "${WTB_SECRETS[@]}" "${WTB_TUNNEL_SECRETS[@]}"; do podman secret rm "$s" >/dev/null 2>&1 || true; done
     rm -rf -- "$HOME/.config/$APP"
     ql_info "removed the secrets and $HOME/.config/$APP (a copy of the env file is in the final backup)"
   fi
