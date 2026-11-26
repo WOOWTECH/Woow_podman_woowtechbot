@@ -1,0 +1,49 @@
+{
+  "schema": "woowtech.podman.formal-email-qa.v1",
+  "scope": "One formal production-mode email code send through the public Podman login page with a temporary QA recipient allowlist and chat-only member",
+  "origin": "https://woowtechbot-openclaw.woowtech.io",
+  "mailClientReferenceId": "79ce07c5-ebcd-4cd3-9ff2-5ff06a0d9005",
+  "mailClientId": 2,
+  "mailClientTestModeRetained": true,
+  "temporaryQaRecipient": {
+    "addressRecorded": false,
+    "paasAllowlistCountBefore": 1,
+    "paasAllowlistCountDuring": 2,
+    "paasAllowlistCountAfter": 1,
+    "paasFinalReadOnlyCheckAtUtc": "2026-11-26T21:59:52.260951Z",
+    "qaRecipientPresentAfter": false,
+    "originalAllowlistAndIdentityAndTokenPreserved": true,
+    "cleanupTimerStopped": true,
+    "temporaryDecryptionKeyAndCiphertextRemovedByPaas": true
+  },
+  "temporaryPodmanMember": {
+    "scope": "chat-only",
+    "memberCountBefore": 1,
+    "memberCountDuring": 2,
+    "memberCountAfter": 1,
+    "onlyThisRunAddedMemberRemoved": true,
+    "originalMemberPreserved": true
+  },
+  "browserAndMail": {
+    "browser": "real Chromium on the formal public /pair page",
+    "emailStartApi": "/api/auth/email/start",
+    "emailStartHttp": 200,
+    "emailStarts": 1,
+    "gmailRealReceiptAtUtc": "2026-11-26T21:46:41Z",
+    "gmailSenderAuthentication": "SPF, DKIM and DMARC passed",
+    "userIndependentlyConfirmedReceiptWithScreenshot": true,
+    "emailDeliveryAcceptance": "pass",
+    "otpAvailableToThisTestWithinValidity": false,
+    "otpVerificationAttempted": false,
+    "loginSessionCreated": false,
+    "otpVerificationAcceptance": "not completed",
+    "emailResent": false,
+    "browserClosedAfterCodeExpiry": true
+  },
+  "secretsRecorded": false,
+  "limits": [
+    "The real email arrived; no valid OTP was provided to the test before its ten-minute expiry.",
+    "No verification success or authenticated QA session is claimed.",
+    "The single-recipient allowlist and chat-only member were cleaned up without changing the original entries."
+  ]
+}
