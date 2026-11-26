@@ -2,7 +2,7 @@
 
 woowtechbot 是 WOOWTECH 的團隊 AI 助理，基於 [OpenMausBot](https://github.com/milind-soni/OpenMausBot) 開源專案（Apache-2.0）。這個 repo 讓它以 rootless Podman（Quadlet、systemd --user）在自己的 Linux 主機上執行。功能以 woowtechbot 的 Home Assistant 外掛版與 WOOW PaaS 雲端服務版為準，三個版本要一致。
 
-> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原及 Codex 真模型長回覆已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
+> **狀態：核心與兩個對外網址已在實機上驗證（2026-11-24，Intel N100、Ubuntu 24.04、Podman 4.9.3）；Pixel Tablet 已實測手機 App 配對、聊天、附件上下傳、背景返回、短暫斷線，以及背景接收 bot 完成通知（2026-11-26）；Cockpit 管理頁已安裝並實際使用；Email 登入信已用公司代寄實際收信並登入驗收（2026-11-25，測試模式）；冷備份與還原、Codex 真模型長回覆，以及 OpenAI 相容閘道的真上游長回覆與大型工具參數已在實機驗證（2026-11-26）。** 容器映像目前不公開，安裝時需要 GHCR 讀取權限。
 
 ## 它怎麼運作
 
@@ -175,7 +175,7 @@ WTB_LLM_GW_MAX_TOKENS=32000
 - 8092 只聽容器內的 loopback，不對主機或公開網址開放。這裡的 `127.0.0.1` 指 bot 容器；若模型服務跑在主機上，必須另外安排容器能到達的位址。
 - 停用前，先把模型供應商端點改回可連線的上游，再設 `WTB_LLM_GW_ENABLED=false` 並重新套用。
 
-`tests/ha-suites.sh <HA 外掛的 checkout> llm-gw` 以同版本 HA 測試及隔離容器內的模擬上游，驗證預設停用、設定傳入、輸出上限、授權與路徑轉送、串流、中斷取消、錯誤回傳、重啟及閘道故障時容器退出。測試不連外、不使用正式模型金鑰。Codex 原生模型的長回覆已另行實測；OpenAI 相容閘道的真上游長回覆與長工具參數仍待驗收。
+`tests/ha-suites.sh <HA 外掛的 checkout> llm-gw` 以同版本 HA 測試及隔離容器內的模擬上游，驗證預設停用、設定傳入、輸出上限、授權與路徑轉送、串流、中斷取消、錯誤回傳、重啟及閘道故障時容器退出。測試不連外、不使用正式模型金鑰。實機另以真上游驗證了 50 段長回覆（5,227 輸出 tokens）、自動補入 32,000 輸出上限、串流大型工具參數（18,821 字元）、重啟後健康狀態與 bot 回覆。指定的 Nemotron 免費模型在工具參數中只產生 1,024 字元，直連上游也一樣；大型參數因此以同一供應商的 `openai/gpt-6-sol` 模型驗證。詳見 `docs/validation/podman-real-provider-20261126.json`。
 
 ## 圖示
 
