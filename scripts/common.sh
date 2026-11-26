@@ -25,7 +25,8 @@ WTB_VERSION=$(cat "$REPO/VERSION")
 WTB_IMAGE=localhost/woowtechbot-podman:$WTB_VERSION
 # The optional credentials (podman secrets) and where the container reads them (root only).
 WTB_SECRETS=(woowtechbot-signin-relay-token woowtechbot-signin-access-client-secret
-  woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url)
+  woowtechbot-apporo-odoo-mcp-url woowtechbot-woow-prod-odoo-mcp-url
+  woowtechbot-android-push-credential)
 # Optional Cloudflare Tunnel connectors (quadlet/optional/<name>.container), each installed only when
 # its token secret <name>-token exists. The bot's container never gets these secrets.
 WTB_TUNNELS=(woowtechbot-tunnel woowtechbot-apps-tunnel)

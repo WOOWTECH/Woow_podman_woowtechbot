@@ -21,7 +21,7 @@ check "example uses the default limits, without swap" has_line example $unit 'Po
 check "the pids limit is rendered" has_line example $unit 'PidsLimit=4096'
 check "a 512 MiB /dev/shm for Chromium" has_line example $unit 'PodmanArgs=--shm-size=512m'
 existing=0
-for s in signin-relay-token signin-access-client-secret apporo-odoo-mcp-url woow-prod-odoo-mcp-url; do
+for s in signin-relay-token signin-access-client-secret apporo-odoo-mcp-url woow-prod-odoo-mcp-url android-push-credential; do
   if podman secret exists "woowtechbot-$s" 2>/dev/null; then existing=$((existing + 1)); fi
 done
 check "example mounts only the secrets this host has ($existing; none in CI)" test \
@@ -31,8 +31,8 @@ check "a settings error (78) does not restart in a loop" has_line example $unit 
 check "BIND=all and the published-apps site are rendered" bash -c \
   "grep -qxF 'PublishPort=18799:8080' '$WORK/fixture-public/out/$unit' && grep -qxF 'PublishPort=18781:8081' '$WORK/fixture-public/out/$unit'"
 check "per-host memory is rendered for both memory flags" has_line fixture-public $unit 'PodmanArgs=--memory=3g --memory-swap=3g --cpus=2'
-check "the four optional secrets are root-only mounts" bash -c \
-  "[[ \$(grep -cE '^Secret=woowtechbot-[a-z-]+,type=mount,uid=0,gid=0,mode=0400$' '$WORK/fixture-secrets/out/$unit') == 4 ]]"
+check "the five optional secrets are root-only mounts" bash -c \
+  "[[ \$(grep -cE '^Secret=woowtechbot-[a-z-]+,type=mount,uid=0,gid=0,mode=0400$' '$WORK/fixture-secrets/out/$unit') == 5 ]]"
 check "the base image is pinned by digest" grep -qE '^WTB_BASE_IMAGE=ghcr\.io/woowtech/amd64-woowtechbot@sha256:[0-9a-f]{64}$' "$REPO/scripts/common.sh"
 
 # The optional tunnel connectors (quadlet/optional, rendered in the example+optional variant).

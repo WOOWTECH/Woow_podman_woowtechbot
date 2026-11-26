@@ -34,6 +34,7 @@ const SECRET_OPTIONS = Object.freeze({
   signin_access_client_secret: 'woowtechbot-signin-access-client-secret',
   apporo_odoo_mcp_url: 'woowtechbot-apporo-odoo-mcp-url',
   woow_prod_odoo_mcp_url: 'woowtechbot-woow-prod-odoo-mcp-url',
+  android_push_credential: 'woowtechbot-android-push-credential',
 });
 
 class ConfigError extends Error {}
@@ -108,6 +109,11 @@ function buildOptions(env, secret = name => readSecret(name)) {
     problems.push('WTB_LLM_GW_UPSTREAM: required as an http(s) URL when WTB_LLM_GW_ENABLED=true');
   }
 
+  const androidPushEnabled = get('WTB_ANDROID_PUSH_ENABLED', 'false').toLowerCase();
+  if (!['true', 'false'].includes(androidPushEnabled)) problems.push('WTB_ANDROID_PUSH_ENABLED: must be true or false');
+  options.android_push_enabled = androidPushEnabled === 'true';
+  options.android_push_relay_url = get('WTB_ANDROID_PUSH_RELAY_URL');
+
   for (const [option, name] of Object.entries(SECRET_OPTIONS)) {
     let value = '';
     try { value = secret(name); } catch (error) { problems.push(error.message); }
@@ -143,6 +149,7 @@ const OPTION_SETTING = Object.freeze({
   public_url: 'WTB_PUBLIC_URL', published_url: 'WTB_PUBLISHED_URL', ingress_origin: 'WTB_PUBLIC_URL',
   signin_relay: 'WTB_SIGNIN_RELAY_URL / woowtechbot-signin-relay-token / WTB_SIGNIN_ACCESS_CLIENT_ID',
   hosting: 'WTB_PUBLIC_URL', odoo: 'woowtechbot-*-odoo-mcp-url secrets',
+  android_push: 'WTB_ANDROID_PUSH_ENABLED / WTB_ANDROID_PUSH_RELAY_URL / woowtechbot-android-push-credential',
 });
 function validateWithAddon(options, addonDir = ADDON) {
   const problems = [];
@@ -160,6 +167,7 @@ function validateWithAddon(options, addonDir = ADDON) {
   run('hosting', () => load('hosting-settings.cjs').hostingSettings(options, () => 'x'.repeat(64)));
   run('signin_relay', () => load('mail-settings.cjs').mailSettings(options, {}));
   run('odoo', () => load('odoo-mcp-settings.cjs').odooMcpSettings(options));
+  run('android_push', () => load('android-push-settings.cjs').androidPushSettings(options));
   if (problems.length) throw new ConfigError(problems.join('\n'));
 }
 
@@ -208,6 +216,7 @@ function selfTest(addonDir = ADDON) {
     'ingress-path.cjs': 'ingressOrigin', 'publication-settings.cjs': 'publicationSettings',
     'hosting-settings.cjs': 'hostingSettings', 'mail-settings.cjs': 'mailSettings',
     'odoo-mcp-settings.cjs': 'odooMcpSettings',
+    'android-push-settings.cjs': 'androidPushSettings',
   };
   for (const [file, fn] of Object.entries(want)) {
     const full = path.join(addonDir, file);

@@ -12,6 +12,7 @@
 #          signin-access-client-secret   Cloudflare Access client secret for that relay (optional)
 #          apporo-odoo-mcp-url           Apporo Odoo read-only MCP private URL (optional)
 #          woow-prod-odoo-mcp-url        woow_prod Odoo read-only MCP private URL (optional)
+#          android-push-credential       this installation's dedicated FCM relay credential
 #          tunnel-token                  Cloudflare Tunnel token for the bot's own connector (optional)
 #          apps-tunnel-token             the same for a separate published-site tunnel (optional)
 #
@@ -77,6 +78,8 @@ else
         || ql_die "expected the dedicated https://<host>/private_.../mcp URL; nothing was changed" ;;
     signin-access-client-secret)
       [[ $value =~ ^[[:graph:]]{1,2048}$ ]] || ql_die "invalid Cloudflare Access client secret; nothing was changed" ;;
+    android-push-credential)
+      [[ $value =~ ^[A-Za-z0-9_-]{43,128}$ ]] || ql_die "expected a dedicated base64url Android push credential; nothing was changed" ;;
   esac
   # shellcheck disable=SC2034 # read by ql_secret_ensure through env:WTB_SECRET_VALUE
   WTB_SECRET_VALUE=$value

@@ -46,6 +46,7 @@ scripts/install.sh --gh-auth  # 看過設定後再執行一次：拉映像、建
 | `WTB_SIGNIN_ACCESS_CLIENT_ID` | `signin_access_client_id` | 選填。代寄網址前若有 Cloudflare Access，填它的 client id；secret 放在密鑰裡 |
 | `WTB_LLM_GW_MAX_TOKENS` | `llm_gw_max_tokens` | OpenAI 相容模型的輸出上限，預設 32000 |
 | `WTB_LLM_GW_ENABLED`、`WTB_LLM_GW_UPSTREAM` | `llm_gw_enabled`、`llm_gw_upstream` | 選配的模型請求閘道（`http://127.0.0.1:8092/v1`） |
+| `WTB_ANDROID_PUSH_ENABLED`、`WTB_ANDROID_PUSH_RELAY_URL` | `android_push_enabled`、`android_push_relay_url` | 離線 Android FCM 通知；預設關閉，啟用時需本安裝專屬的 `android-push-credential` Podman secret 與 HTTPS `/v1/android-push` relay |
 | `WTB_TURNS_MAX_RUNNING` | （HA 為 auto） | 同時執行的對話數，預設 3；PaaS 是 5 |
 
 `WOOW_WTB_*` 是安裝參數：開放的位址與埠（預設 `127.0.0.1:18799`，發布網站用 `18781`），以及記憶體、CPU、程序數的上限。
@@ -60,6 +61,7 @@ scripts/secret.sh set signin-relay-token        # 公司代寄登入信的權杖
 scripts/secret.sh set signin-access-client-secret
 scripts/secret.sh set apporo-odoo-mcp-url        # 選填：Odoo MCP 唯讀
 scripts/secret.sh set woow-prod-odoo-mcp-url
+scripts/secret.sh set android-push-credential  # 僅使用這個 Podman 安裝專屬的 relay credential
 scripts/secret.sh set tunnel-token               # 選填：bot 自己的對外通道（見「對外網址」）
 scripts/install.sh                               # 套用
 ```
@@ -227,7 +229,7 @@ scripts/restore.sh 備份目錄 --identity 私鑰檔 --with-secrets
 - 沒有 HA Supervisor 備份；改用本 repo 的冷備份與還原腳本（見上一節）。
 - 外掛程式目前要求一定要有 `ingress_origin`，Podman 會自動用 bot 自己的網址代入。
 - Chromium 的沙盒是關閉的，改靠容器隔離，和 HA、PaaS 相同。
-- 沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。
+- 目前正式安裝的 rc.22-2 還沒有 FCM 遠端推播；App 開著或「保持連線」時才收得到通知。rc.23 候選已接上獨立 relay 設定與 Podman secret，但尚未換正式映像，也未完成真機離線收件。詳見 [候選驗證](docs/validation/podman-rc23-fcm-candidate-20261126.json)。
 - 手機 App 的圖示和打開畫面是 MausBot 的，那是 App 自帶的，這裡改不了；見「圖示」。
 - 上游 MausBot 的廣告（團隊方案、ModelGo、Boat 優惠等）和「公告」頁已拿掉，這是 PaaS 的修補 0016，HA 映像從 0.1.7-rc.20 起帶著。畫面上還有約一百處「MausBot」字樣，講的是手機 App、MausBot Cloud 和帳號等上游的東西，和 PaaS 一樣刻意保留。
 - HA rc.22 帶入 PaaS 修補 0017：頭像的十種通用輪廓、十種表情和黑白五官可切換；兩種編輯器不再列節慶款式，也不會自動裝扮。舊節慶 body ID 僅在畫面顯示通用機器人，原資料與上傳頭像保留。
