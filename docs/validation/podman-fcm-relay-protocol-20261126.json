@@ -1,0 +1,43 @@
+{
+  "schema": "woowtech.podman.fcm-relay-protocol.v1",
+  "checkedAt": "2026-11-26T13:03:54.319258+00:00",
+  "environmentId": "04b10d77-1b3c-497c-8ae2-b273c7c75b25",
+  "installationIdentityMarker": "f49dce1d-a0bc-4fd0-8b0f-35c7d5bf9474",
+  "relayUrl": "https://assistant-push-test.woowtech.io/v1/android-push",
+  "credentialHandoff": {
+    "rsaSpkiSha256Verified": "e19ad26c1155f1c2c84c2d6220c4c75e9cf4845b371d13fd8c893873119fa66c",
+    "plaintextFormat": "32 random bytes encoded as 43 base64url characters",
+    "podmanSecretCreated": "woowtechbot-android-push-credential",
+    "temporaryPlaintextFileRemoved": true
+  },
+  "method": "direct HTTPS synthetic protocol request with this installation's credential; production container remained unchanged",
+  "syntheticRegistrationId": "4030b01f-03ad-4c95-bce3-71dc21a30573",
+  "register": {
+    "httpStatus": 200,
+    "ack": true,
+    "revision": 1
+  },
+  "revoke": {
+    "httpStatus": 200,
+    "ack": true,
+    "revision": 2
+  },
+  "independentRelayObservation": {
+    "observedAtUtc": "2026-11-26T13:04:57Z",
+    "exists": true,
+    "revision": 2,
+    "tombstone": true,
+    "tokenFieldRemoved": true,
+    "pendingEvents": 0,
+    "totalEvents": 0,
+    "observer": "PaaS external relay owner"
+  },
+  "cloudflareProbe": {
+    "pythonDefaultUserAgent": "403 text/plain at edge",
+    "nodeUserAgent": "401 JSON without credential; 200 JSON ACK with this installation's credential"
+  },
+  "pushSendAttempted": false,
+  "phoneRegistration": false,
+  "productionContainerChanged": false,
+  "nativeFcmDelivered": false
+}
